@@ -2,75 +2,73 @@ const { getDB } = require("../config/env");
 const sequelize = getDB();
 const { Model, DataTypes } = require("sequelize");
 
-class Fans extends Model {
+class Song extends Model {
     static associate(models){
       // Relationship dengan Saldo
         // this.hasMany(models.Saldo, { foreignKey: 'id_user' });
     }
   }
-Fans.init(
+Song.init(
     {
-       id_fans: {
+       id_song: {
         type: DataTypes.STRING(255),
         primaryKey: true,
         allowNull: false
       },
-      username: {
+      id_artist: {
         type: DataTypes.STRING(255),
         allowNull: false
       },
-      email:{
-        type: DataTypes.STRING(255),
-        allowNull: false
-    },
-       password: {
-       type: DataTypes.STRING(255),
-        allowNull: false
-        },
-       first_name: {
-        type: DataTypes.STRING(255),
-        allowNull: true
-      },
-        last_name: {
+      id_album:{
         type: DataTypes.STRING(255),
         allowNull: true
         },
-        birth: {
+        name: {
+            type: DataTypes.STRING(255),
+            allowNull:false
+        },
+        genre: {
+            type: DataTypes.STRING(255),
+            allowNull:false
+        },
+        release_date: {
             type: DataTypes.DATE(),
+            allowNull:false
+        },
+        credit: {
+            type: DataTypes.STRING(255),
             allowNull:true
         },
-    phone: {
-      type: DataTypes.STRING(13),
-      allowNull: true
-     },
-      role:{
-        type: DataTypes.STRING(7),
-        allowNull: false
-      },
-      gender:{
-        type: DataTypes.STRING(7),
-        allowNull: true
+        description: {
+            type: DataTypes.STRING(255),
+            allowNull:true
         },
-        avatar: {
+        image: {
             type: DataTypes.BLOB("long"),
-            allowNull:true
+            allowNull:false
+        }
+        ,
+        audio: {
+            type: DataTypes.BLOB("long"),
+            allowNull:false
         },
         created_at: {
             type: DataTypes.DATE(),
-        },
-         status: {
-            type: DataTypes.NUMBER(2),
             allowNull:false
         },
+        status: {
+            type: DataTypes.NUMBER(2),
+            allowNull:false
+        }
     },
     {
       sequelize,
       timestamps: false,
-      modelName: "Fans",
-      tableName: "fans",
+      modelName: "Song",
+      tableName: "song",
     }
   );
   
-module.exports = Fans;
+module.exports = Song;
   
   

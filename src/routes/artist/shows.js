@@ -2,7 +2,7 @@ const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 const Artist = require("../../models/Artist");
-const Album = require("../../models/Album");
+const Shows = require("../../models/Shows");
 
 const jwt = require("jsonwebtoken");
 const multer = require('multer');
@@ -12,10 +12,9 @@ const fs = require('fs');
 
 const router = express.Router();
 
-
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
-        cb(null, './assets/image/album');
+        cb(null, './assets/image/shows');
     },
     fileFilter: function name(req, file, cb) {
         if (file.mimetype == "image/png"
@@ -33,7 +32,7 @@ const storage = multer.diskStorage({
         const fileName = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
         cb(null, fileName);
         req.on('aborted', () => {
-            const fullFilePath = path.join('assets', 'image', 'album', fileName);
+            const fullFilePath = path.join('assets', 'image', 'shows', fileName);
             file.stream.on('end', () => {
                 fs.unlink(fullFilePath, (err) => {
                     console.log(fullFilePath);
@@ -49,35 +48,37 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-router.post('/album/add', upload.single('image'), async function (req, res) {
-    let { name, description } = req.body;
+router.post('/shows/add', upload.single('image'), async function (req, res) {
+    let { name, date, location, contact, description } = req.body;
     let { image } = req.file;
 
-    const paths = `${req.protocol}://${req.get('host')}/assets/image/album/${req.file.filename}`;
     const filePath = req.file.filename;
     
     const token = req.headers.authorization.split(' ')[1];
     let userdata = jwt.verify(token, JWT_KEY);
 
-    let newIdPrefix = "ALBM";
+    let newIdPrefix = "SWHS";
     let keyword = `%${newIdPrefix}%`
-    let similiarUID = await Album.findAll({
+    let similiarUID = await Shows.findAll({
         where: {
-            id_album: {
+            id_artist: {
                 [Op.like]: keyword
             }
         }
     });
-    let newIdAlbum = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
-    const newAlbum = await Album.create({
-        id_album: newIdAlbum,
+    let newIdShows = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
+    const newShows= await Shows.create({
+        id_show: newIdShows,
         id_artist: userdata.id_artist,
         name: name,
-        description: description,
+        date:date,
+        location: location,
+        contact: contact,
+        description:description,
         image: filePath,
         created_at: Date.now(),
         status: 1,
     });
-    return res.status(201).send({message: "album berhasil ditambahkan oleh " + userdata.name})
+    return res.status(201).send({message: "shows berhasil ditambahkan oleh " + userdata.name})
 });
 module.exports = router;
