@@ -12,7 +12,6 @@ const fs = require('fs');
 
 const router = express.Router();
 
-
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
         cb(null, './assets/image/album');

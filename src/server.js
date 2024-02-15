@@ -8,6 +8,7 @@ const album = require('./routes/artist/album');
 const shows = require('./routes/artist/shows')
 const login = require("./routes/login");
 const song = require('./routes/artist/song');
+const merch = require('./routes/artist/merchandise');
 // const Fans= require("./models/Fans");
 
 // User.associate({Saldo});
@@ -30,6 +31,7 @@ app.use("/api", album);
 app.use("/api", shows);
 app.use("/api", login);
 app.use("/api", song);
+app.use("/api", merch);
 
 app.listen(app.get("port"), () => {
     console.log(`Server started at http://localhost:${app.get("port")}`);
