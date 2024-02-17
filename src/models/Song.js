@@ -3,9 +3,9 @@ const sequelize = getDB();
 const { Model, DataTypes } = require("sequelize");
 
 class Song extends Model {
-    static associate(models){
-      // Relationship dengan Saldo
-        // this.hasMany(models.Saldo, { foreignKey: 'id_user' });
+  static associate(models) {
+    this.belongsTo(models.Artist, { foreignKey: 'id_artist' });
+    this.belongsTo(models.Album, { foreignKey: 'id_album' });
     }
   }
 Song.init(

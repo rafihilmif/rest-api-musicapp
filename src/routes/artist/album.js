@@ -1,6 +1,7 @@
 const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
+
 const Artist = require("../../models/Artist");
 const Album = require("../../models/Album");
 
@@ -14,7 +15,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
-        cb(null, './assets/image/album');
+         cb(null, './public/assets/image/album');
     },
     fileFilter: function name(req, file, cb) {
         if (file.mimetype == "image/png"
@@ -78,5 +79,35 @@ router.post('/album/add', upload.single('image'), async function (req, res) {
         status: 1,
     });
     return res.status(201).send({message: "album berhasil ditambahkan oleh " + userdata.name})
+});
+// SHOW ALL ALBUM
+router.get('/album', async function (req, res) {
+    const token = req.headers.authorization.split(' ')[1];
+    // let token = req.header('x-auth-token');
+    let userdata = jwt.verify(token, JWT_KEY);
+
+    try {
+        const data = await Album.findAll({
+            where: {
+                id_artist: userdata.id_artist
+            },
+            include: [
+                {
+                    model: Artist, attributes: ['id_artist', 'name'],
+                    where: {
+                        'id_artist': {
+                            [Op.like] : userdata.id_artist
+                        }
+                    }
+                }
+            ],
+        });
+        
+        return res.status(200).json({
+            data
+        })
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
 });
 module.exports = router;

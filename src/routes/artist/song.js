@@ -15,10 +15,10 @@ const router = express.Router();
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
         if (file.fieldname === "image") {
-               cb(null, './assets/image/song');
+                cb(null, './public/assets/image/song');
            }
         if (file.fieldname === "audio") {
-               cb(null, './assets/audio');
+               cb(null, './public/assets/audio');
            }
     },
     filename: function name(req, file, cb) {
@@ -78,4 +78,24 @@ router.post('/song/add', upload.fields([{
     });
     return res.status(200).send({ message: 'track berhasil ditambahkan' });
 });
+//SHOW ALL SONG
+router.get('/song', async function (req, res) {
+    const token = req.headers.authorization.split(' ')[1];
+    // let token = req.header('x-auth-token');
+    let userdata = jwt.verify(token, JWT_KEY);
+
+    try {
+        const data = await Song.findAll({
+            where: {
+                id_artist: userdata.id_artist
+            },
+        });
+        return res.status(200).json({
+            data
+        })
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
 module.exports = router;

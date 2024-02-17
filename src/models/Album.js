@@ -4,8 +4,8 @@ const { Model, DataTypes } = require("sequelize");
 
 class Album extends Model {
     static associate(models){
-      // Relationship dengan Saldo
-        // this.hasMany(models.Saldo, { foreignKey: 'id_user' });
+      this.hasMany(models.Song, { foreignKey: 'id_album' });
+        this.belongsTo(models.Artist, { foreignKey: 'id_artist' });
     }
   }
 Album.init(

@@ -15,7 +15,7 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-     cb(null, './assets/image/merchandise');
+     cb(null, './public/assets/image/merchandise');
     },
         fileFilter: function name(req, file, cb) {
         if (file.mimetype == "image/png"
@@ -83,6 +83,25 @@ router.post('/merchandise/add', upload.single('image'), async function (req, res
         status: 1,
     });
     return res.status(201).send({message: "merchandise berhasil ditambahkan oleh " + userdata.name})
+});
+//SHOW ALL EVENT
+router.get('/merchandise', async function (req, res) {
+    const token = req.headers.authorization.split(' ')[1];
+    // let token = req.header('x-auth-token');
+    let userdata = jwt.verify(token, JWT_KEY);
+
+    try {
+        const data = await Merch.findAll({
+            where: {
+                id_artist: userdata.id_artist
+            }
+        });
+        return res.status(200).json({
+            data
+        })
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
 });
 
 //FAILED UPLOAD MULTI IMAGE  

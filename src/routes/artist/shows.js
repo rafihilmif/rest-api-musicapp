@@ -14,7 +14,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
-        cb(null, './assets/image/shows');
+        cb(null, './public/assets/image/shows');
     },
     fileFilter: function name(req, file, cb) {
         if (file.mimetype == "image/png"
@@ -61,7 +61,7 @@ router.post('/shows/add', upload.single('image'), async function (req, res) {
     let keyword = `%${newIdPrefix}%`
     let similiarUID = await Shows.findAll({
         where: {
-            id_artist: {
+            id_show: {
                 [Op.like]: keyword
             }
         }
@@ -71,7 +71,7 @@ router.post('/shows/add', upload.single('image'), async function (req, res) {
         id_show: newIdShows,
         id_artist: userdata.id_artist,
         name: name,
-        date:date,
+        duedate:date,
         location: location,
         contact: contact,
         description:description,
@@ -80,5 +80,24 @@ router.post('/shows/add', upload.single('image'), async function (req, res) {
         status: 1,
     });
     return res.status(201).send({message: "shows berhasil ditambahkan oleh " + userdata.name})
+});
+//SHOW ALL EVENT
+router.get('/shows', async function (req, res) {
+    const token = req.headers.authorization.split(' ')[1];
+    // let token = req.header('x-auth-token');
+    let userdata = jwt.verify(token, JWT_KEY);
+
+    try {
+        const data = await Shows.findAll({
+            where: {
+                id_artist: userdata.id_artist
+            }
+        });
+        return res.status(200).json({
+            data
+        })
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
 });
 module.exports = router;
