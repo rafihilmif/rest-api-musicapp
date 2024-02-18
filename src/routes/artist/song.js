@@ -89,10 +89,20 @@ router.get('/song', async function (req, res) {
             where: {
                 id_artist: userdata.id_artist
             },
+            include: [
+                {
+                    model: Artist, attributes: ['id_artist', 'name'],
+                    where: {
+                        'id_artist': {
+                            [Op.like] : userdata.id_artist
+                        }
+                    }
+                }
+            ],
         });
         return res.status(200).json({
             data
-        })
+        });
     } catch (err) {
         return res.status(400).send('gagal memuat data');
     }
