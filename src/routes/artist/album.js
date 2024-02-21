@@ -10,7 +10,6 @@ const multer = require('multer');
 const path = require('path');
 const JWT_KEY = 'makeblackmetalhateagain';
 const fs = require('fs');
-const { count } = require("console");
 
 const router = express.Router();
 
@@ -82,28 +81,24 @@ router.post('/album/add', upload.single('image'), async function (req, res) {
     return res.status(201).send({message: "album berhasil ditambahkan oleh " + userdata.name})
 });
 
-// SHOW ALL ALBUM
-const getPagination = (page = 1, per_page = 12) => {
-    const limit = per_page;
-    const offset = (page - 1) * per_page;
-    return { limit, offset };
-}
-const getPagingData = (collection, page = 1, limit) => {
-    const { count: totalItems } = collection;
-    const currentPage = page;
-    const totalPages = Math.ceil(totalItems / limit);
-    return { totalItems, collection, totalPages, currentPage };
-}
 router.get('/album', async function (req, res) {
-    const { page, per_page } = req.query;
-    const { limit, offset } = getPagination(page, per_page);
-   
+    const currentPage = req.query.currentPage || 1;
+    const limit= req.query.limit || 12;
+
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = currentPage * limit;
+    
     // const token = req.headers.authorization.split(' ')[1];
     let token = req.header('x-auth-token');
     let userdata = jwt.verify(token, JWT_KEY);
-
+    const totalRowsData = await Album.count({
+        where: {
+            id_artist : userdata.id_artist
+        }, 
+    });
+    const totalPage = Math.ceil(totalRowsData / limit);
     try {
-        const dataAlbum = await Album.findAndCountAll({
+        const data = await Album.findAll({
             where: {
                 id_artist: userdata.id_artist,
             },
@@ -117,17 +112,20 @@ router.get('/album', async function (req, res) {
                     }
                 }
             ],
-            offset: offset,
+            offset: endIndex,
             limit: limit,
             order: [
                 [Sequelize.literal(`id_album`), 'ASC'],
             ],
         });
-        const total = dataAlbum.count;
-        const items = dataAlbum.rows;
-        const data = getPagingData(items, page, limit);
-        console.log(data.collection.rows)
-        return res.status(200).json({data})
+        return res.status(200).json({
+            data: data,
+            currentPage: currentPage,
+            startIndex:startIndex,
+            endIndex:endIndex,
+            totalRowsData: totalRowsData,
+            totalPage: totalPage
+        })
         
     } catch (err) {
         return res.status(400).send('gagal memuat data');
