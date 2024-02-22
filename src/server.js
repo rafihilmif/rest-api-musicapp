@@ -26,7 +26,7 @@ Song.associate({ Artist, Album });
 const app = express();
 
 app.set("port", 3030);
-app.use(cors())
+app.use(cors({origin:true, credentials:true}));
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(bodyParser.urlencoded({ extended: false }));

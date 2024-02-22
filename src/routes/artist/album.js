@@ -82,23 +82,15 @@ router.post('/album/add', upload.single('image'), async function (req, res) {
 });
 
 router.get('/album', async function (req, res) {
-    const currentPage = req.query.currentPage || 1;
-    const limit= req.query.limit || 12;
-
-    const startIndex = (currentPage - 1) * limit;
-    const endIndex = currentPage * limit;
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 12;
+    const offset = (page - 1) * limit || 0;
     
-    // const token = req.headers.authorization.split(' ')[1];
-    let token = req.header('x-auth-token');
-    let userdata = jwt.verify(token, JWT_KEY);
-    const totalRowsData = await Album.count({
-        where: {
-            id_artist : userdata.id_artist
-        }, 
-    });
-    const totalPage = Math.ceil(totalRowsData / limit);
+    const token = req.headers.authorization.split(' ')[1];
+    // let token = req.header('x-auth-token');
     try {
-        const data = await Album.findAll({
+    let userdata = jwt.verify(token, JWT_KEY);
+    const {rows, count} = await Album.findAndCountAll({
             where: {
                 id_artist: userdata.id_artist,
             },
@@ -112,21 +104,16 @@ router.get('/album', async function (req, res) {
                     }
                 }
             ],
-            offset: endIndex,
-            limit: limit,
+            limit,
+            offset,
             order: [
                 [Sequelize.literal(`id_album`), 'ASC'],
             ],
         });
-        return res.status(200).json({
-            data: data,
-            currentPage: currentPage,
-            startIndex:startIndex,
-            endIndex:endIndex,
-            totalRowsData: totalRowsData,
-            totalPage: totalPage
-        })
-        
+    return res.status(200).json({
+        data: rows,
+        total: count
+    });
     } catch (err) {
         return res.status(400).send('gagal memuat data');
     }
