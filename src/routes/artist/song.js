@@ -80,12 +80,17 @@ router.post('/song/add', upload.fields([{
 });
 //SHOW ALL SONG
 router.get('/song', async function (req, res) {
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 12;
+    const offset = (page - 1) * limit || 0;
+
     const token = req.headers.authorization.split(' ')[1];
     // let token = req.header('x-auth-token');
+    
     let userdata = jwt.verify(token, JWT_KEY);
 
     try {
-        const data = await Song.findAll({
+       const {rows, count} = await Song.findAndCountAll({
             where: {
                 id_artist: userdata.id_artist
             },
@@ -99,9 +104,15 @@ router.get('/song', async function (req, res) {
                     }
                 }
             ],
+            limit,
+            offset,
+            order: [
+                [Sequelize.literal('name'), 'ASC']
+            ]
         });
         return res.status(200).json({
-            data
+            data: rows,
+            total: count
         });
     } catch (err) {
         return res.status(400).send('gagal memuat data');

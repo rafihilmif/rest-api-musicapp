@@ -83,18 +83,36 @@ router.post('/shows/add', upload.single('image'), async function (req, res) {
 });
 //SHOW ALL EVENT
 router.get('/shows', async function (req, res) {
+     const { page, pageSize } = req.query;
+    const limit = pageSize || 12;
+    const offset = (page - 1) * limit || 0;
+
     const token = req.headers.authorization.split(' ')[1];
     // let token = req.header('x-auth-token');
     let userdata = jwt.verify(token, JWT_KEY);
 
     try {
-        const data = await Shows.findAll({
+        const {rows, count} = await Shows.findAndCountAll({
             where: {
                 id_artist: userdata.id_artist
-            }
+            },
+            include: {
+                model: Artist, attributes: ['id_artist', 'name'],
+                where: {
+                    'id_artist': {
+                        [Op.like] : userdata.id_artist
+                    }
+                }
+            },
+            limit,
+            offset,
+            order: [
+                [Sequelize.literal('name', 'ASC')]
+            ]
         });
         return res.status(200).json({
-            data
+            data: rows,
+            total: count
         })
     } catch (err) {
         return res.status(400).send('gagal memuat data');

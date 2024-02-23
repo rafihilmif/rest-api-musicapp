@@ -107,7 +107,7 @@ router.get('/album', async function (req, res) {
             limit,
             offset,
             order: [
-                [Sequelize.literal(`id_album`), 'ASC'],
+                [Sequelize.literal(`name`), 'ASC'],
             ],
         });
     return res.status(200).json({
