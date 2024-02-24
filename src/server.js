@@ -11,14 +11,18 @@ const login = require("./routes/login");
 const song = require('./routes/artist/song');
 const merch = require('./routes/artist/merchandise');
 
+const admin_merch = require('./routes/admin/merchandise')
+
 const Artist= require("./models/Artist");
 const Merch = require("./models/Merch");
 const Shows = require("./models/Shows");
 const Album = require("./models/Album");
 const Song = require("./models/Song");
+const Category = require("./models/Category");
 
 Artist.associate({ Merch, Shows, Album, Song });
-Merch.associate({ Artist });
+Merch.associate({ Artist, Category });
+Category.associate({Merch})
 Shows.associate({ Artist });
 Album.associate({ Artist, Song });
 Song.associate({ Artist, Album });
@@ -40,7 +44,7 @@ app.use("/api", shows);
 app.use("/api", login);
 app.use("/api", song);
 app.use("/api", merch);
-
+app.use("/api", admin_merch);
 
 app.listen(app.get("port"), () => {
     console.log(`Server started at http://localhost:${app.get("port")}`);

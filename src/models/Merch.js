@@ -5,6 +5,7 @@ const { Model, DataTypes } = require("sequelize");
 class Merchandise extends Model {
     static associate(models){
       this.belongsTo(models.Artist, { foreignKey: 'id_artist' });
+      this.belongsTo(models.Category, { foreignKey: 'id_category' });
     }
   }
 Merchandise.init(
