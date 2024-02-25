@@ -5,11 +5,12 @@ const Fans = require('./Fans');
 const Song = require('./Song');
 const Shows = require('./Shows');
 const Category = require('./Category');
-
+const Genre = require('./Genre');
 module.exports = function () {
     Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: 'id_artist' });
     Album.hasMany(Song, { foreignKey: 'id_album' });
     Category.hasMany(Merch, { foreignKey: 'id_category' });
+    Genre.hasMany(Artist, Song, { foreignKey: 'name' });
 
     Album.belongsTo(Artist, { foreignKey: 'id_artist' });
     Merch.belongsTo(Artist, { foreignKey: 'id_artist' });
@@ -19,4 +20,8 @@ module.exports = function () {
     Song.belongsTo(Album, { foreignKey: 'id_album' });
 
     Merch.belongsTo(Category, { foreignKey: 'id_category' });
+    
+    Artist.belongsTo(Genre, { foreignKey: 'genre' });
+    Song.belongsTo(Genre, { foreignKey: 'genre' });
+    
 }

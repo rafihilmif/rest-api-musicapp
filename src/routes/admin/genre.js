@@ -1,0 +1,77 @@
+const { response } = require("express");
+const express = require("express");
+const { Op, Sequelize } = require("sequelize");
+
+const Genre = require("../../models/Genre");
+
+const router = express.Router();
+
+const checkGenre = async (name_genre) => {
+    const checkGenreName = await Genre.findOne(
+        {
+            where: {
+                name: {
+                    [Op.like]: name_genre
+                }
+            }
+        }
+    );
+    if (checkGenreName) {
+        throw new Error("genre can't be duplicated");
+    }
+};
+router.post('/admin/genre/add', async function (req, res){
+    let { name_genre } = req.body
+
+    let newIdPrefix = "GNR";
+    let keyword = `%${newIdPrefix}%`
+    let similiarUID = await Genre.findAll({
+        where: {
+            id_genre: {
+                [Op.like]: keyword
+            }
+        }
+    });
+
+    let newIdGenre = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
+    const newGenre = await Genre.create({
+        id_genre: newIdGenre,
+        name: name_genre,
+        created_at: Date.now(),
+    });
+    return res.status(201).send({ message: "genre " + name_genre + " berhasil ditambahkan" });
+});
+router.get('/admin/genre', async function (req, res) {
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 6;
+    const offset = (page - 1) * limit || 0;
+
+    try {
+        const {rows, count} = await Genre.findAndCountAll({
+            limit,
+            offset,
+             order: [
+                [Sequelize.literal(`id_genre`), 'ASC'],
+            ],
+        });
+        return res.status(200).json({
+        data: rows,
+        total: count
+    });
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
+router.get('/genre', async function (req, res) {
+    try {
+        const dataGenre = await Genre.findAll({});
+        return res.status(200).json({
+            data: dataGenre
+        });
+    } catch (error) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
+module.exports = router;

@@ -9,6 +9,8 @@ class Artist extends Model {
       this.hasMany(models.Album, { foreignKey: 'id_artist' });
       this.hasMany(models.Song, { foreignKey: 'id_artist' });
       this.hasMany(models.Shows, { foreignKey: 'id_artist' });
+
+      this.belongsTo(models.Genre, { foreignKey: 'genre' });
     }
   }
 Artist.init(
