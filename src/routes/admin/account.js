@@ -167,4 +167,54 @@ router.get('/admin/artist', async function (req, res) {
     }
 });
 
+router.post('/admin/fans/add', upload.single('image'), async function (req, res) {
+    let { first_name, last_name, email, username, password, gender, birth} = req.body;
+    const filePath = req.file.filename;
+
+    const schema = Joi.object({
+        first_name: Joi.string().required(),
+        last_name: Joi.string().required(),
+        email: Joi.string().external(checkEmail).email({ minDomainSegments: 2, tlds: { allow: ['com'] } }).required(),
+        username: Joi.string().external(checkUsername).required(),
+        gender: Joi.string().required(),
+        password: Joi.string().required(),
+        birth: Joi.string().required()
+    });
+    let newIdPrefix = "FNS"
+    let keyword = `%${newIdPrefix}%`;
+    let similiarUID = await Fans.findAll(
+        {
+            where: {
+                id_fans: {
+                    [Op.like]: keyword
+                }
+            }
+        }
+    )
+    try {
+        await schema.validateAsync(req.body)
+    } catch (error) {
+        return res.status(400).send(error.toString())
+    }
+    let newIdFans = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
+     const passwordHash = bcrypt.hashSync(password, 10);
+       Fans.create({
+            id_fans: newIdFans,
+            email: email,
+            first_name: first_name,
+            last_name: last_name,
+            password: passwordHash,
+            username: username,
+            birth:birth,
+            gender: gender,
+            phone: null,
+            role: "fans",
+            avatar: filePath,
+            created_at: Date.now(),
+            status:1
+        });
+    return res.status(201).send({
+        message: "berhasil menambahkan akun"
+    });
+});
 module.exports = router;
