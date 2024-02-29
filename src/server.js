@@ -15,6 +15,7 @@ const admin_merch = require('./routes/admin/merchandise')
 const admin_genre = require('./routes/admin/genre');
 const admin_account = require('./routes/admin/account');
 const admin_song = require('./routes/admin/song');
+const admin_plan = require('./routes/admin/plan');
 
 const Artist= require("./models/Artist");
 const Merch = require("./models/Merch");
@@ -23,6 +24,9 @@ const Album = require("./models/Album");
 const Song = require("./models/Song");
 const Category = require("./models/Category");
 const Genre = require("./models/Genre");
+const Fans = require("./models/Fans");
+const Plan = require("./models/Plan");
+const Subscription = require("./models/Subscription");
 
 Artist.associate({ Merch, Shows, Album, Song, Genre });
 Merch.associate({ Artist, Category });
@@ -31,6 +35,9 @@ Shows.associate({ Artist });
 Album.associate({ Artist, Song });
 Song.associate({ Artist, Album, Genre });
 Genre.associate({ Artist, Song });
+Plan.associate({ Subscription });
+Fans.associate({ Subscription });
+Subscription.associate({ Plan, Fans });
 
 const app = express();
 
@@ -54,6 +61,7 @@ app.use("/api", admin_merch);
 app.use("/api", admin_genre);
 app.use("/api", admin_account);
 app.use("/api", admin_song);
+app.use("/api", admin_plan);
 
 app.listen(app.get("port"), () => {
     console.log(`Server started at http://localhost:${app.get("port")}`);

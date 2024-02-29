@@ -6,7 +6,6 @@ class Song extends Model {
   static associate(models) {
     this.belongsTo(models.Artist, { foreignKey: 'id_artist' });
     this.belongsTo(models.Album, { foreignKey: 'id_album' });
-
     this.belongsTo(models.Genre, { foreignKey: 'genre' });
     }
   }
