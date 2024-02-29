@@ -217,4 +217,38 @@ router.post('/admin/fans/add', upload.single('image'), async function (req, res)
         message: "berhasil menambahkan akun"
     });
 });
+
+router.get('/artist', async function (req, res) {
+    try {
+        const dataArtist= await Artist.findAll({});
+        return res.status(200).json({
+            data: dataArtist
+        });
+    } catch (error) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
+router.get('/admin/fans', async function (req, res) {
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 12;
+    const offset = (page - 1) * limit || 0;
+
+    try {
+        const {rows, count} = await Fans.findAndCountAll({
+            limit,
+            offset,
+             order: [
+                [Sequelize.literal(`id_fans`), 'ASC'],
+            ],
+        });
+        return res.status(200).json({
+        data: rows,
+        total: count
+    });
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
 module.exports = router;

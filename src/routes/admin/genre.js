@@ -6,12 +6,12 @@ const Genre = require("../../models/Genre");
 
 const router = express.Router();
 
-const checkGenre = async (name_genre) => {
+const checkGenre = async (name) => {
     const checkGenreName = await Genre.findOne(
         {
             where: {
                 name: {
-                    [Op.like]: name_genre
+                    [Op.like]: name
                 }
             }
         }
@@ -21,7 +21,7 @@ const checkGenre = async (name_genre) => {
     }
 };
 router.post('/admin/genre/add', async function (req, res){
-    let { name_genre } = req.body
+    let {name} = req.body
 
     let newIdPrefix = "GNR";
     let keyword = `%${newIdPrefix}%`
@@ -36,10 +36,10 @@ router.post('/admin/genre/add', async function (req, res){
     let newIdGenre = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
     const newGenre = await Genre.create({
         id_genre: newIdGenre,
-        name: name_genre,
+        name: name,
         created_at: Date.now(),
     });
-    return res.status(201).send({ message: "genre " + name_genre + " berhasil ditambahkan" });
+    return res.status(201).send({ message: "genre " + name + " berhasil ditambahkan" });
 });
 router.get('/admin/genre', async function (req, res) {
     const { page, pageSize } = req.query;

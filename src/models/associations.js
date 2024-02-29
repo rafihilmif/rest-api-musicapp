@@ -9,7 +9,7 @@ const Genre = require('./Genre');
 module.exports = function () {
     Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: 'id_artist' });
     Album.hasMany(Song, { foreignKey: 'id_album' });
-    Category.hasMany(Merch, { foreignKey: 'id_category' });
+    Category.hasMany(Merch, { foreignKey: 'name' });
     Genre.hasMany(Artist, Song, { foreignKey: 'name' });
 
     Album.belongsTo(Artist, { foreignKey: 'id_artist' });
@@ -19,7 +19,7 @@ module.exports = function () {
 
     Song.belongsTo(Album, { foreignKey: 'id_album' });
 
-    Merch.belongsTo(Category, { foreignKey: 'id_category' });
+    Merch.belongsTo(Category, { foreignKey: 'category' });
     
     Artist.belongsTo(Genre, { foreignKey: 'genre' });
     Song.belongsTo(Genre, { foreignKey: 'genre' });
