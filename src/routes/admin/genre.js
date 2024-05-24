@@ -41,7 +41,7 @@ router.post('/admin/genre/add', async function (req, res){
     });
     return res.status(201).send({ message: "genre " + name + " berhasil ditambahkan" });
 });
-router.get('/admin/genre', async function (req, res) {
+router.get('/admin/genres', async function (req, res) {
     const { page, pageSize } = req.query;
     const limit = pageSize || 6;
     const offset = (page - 1) * limit || 0;
@@ -62,7 +62,37 @@ router.get('/admin/genre', async function (req, res) {
         return res.status(400).send('gagal memuat data');
     }
 });
-
+router.get('/admin/genre', async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Genre.findOne({
+            where: {
+                id_genre: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send(data);
+    } catch (error) {
+        return res.status(404).send('data tidak ditemukan');
+    }
+});
+router.put('/admin/genre', async function (req, res) {
+    const { id } = req.query;
+    try {
+        await Genre.update(req.body, {
+            where: {
+                id_genre: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(201).send('Data berhasil diubah');
+    } catch (error) {
+        return res.status(400).send('gagal memuat data');
+    }
+    
+});
 router.get('/genre', async function (req, res) {
     try {
         const dataGenre = await Genre.findAll({});

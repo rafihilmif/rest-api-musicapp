@@ -9,6 +9,7 @@ const Merch = require("../../models/Merch");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { func } = require("joi");
 
 const router = express.Router();
 
@@ -83,7 +84,7 @@ router.post('/admin/category/add', async function (req, res) {
     });
     return res.status(201).send({ message: "category " + name + " berhasil ditambahkan" });
 });
-router.get('/admin/category', async function (req, res) {
+router.get('/admin/categories', async function (req, res) {
     const { page, pageSize } = req.query;
     const limit = pageSize || 6;
     const offset = (page - 1) * limit || 0;
@@ -104,7 +105,36 @@ router.get('/admin/category', async function (req, res) {
         return res.status(400).send('gagal memuat data');
     }
 });
-
+router.get('/admin/category', async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Category.findOne({
+            where: {
+                id_category: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send(data);
+    } catch (error) {
+        return res.status(404).send('Data tidak ditemukan');
+    }
+});
+router.put('/admin/category', async function (req, res) {
+    const { id } = req.query;
+    try {
+        await Category.update(req.body, {
+            where: {
+                id_category: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send('Data berhasil diubah');
+    } catch (error) {
+        return res.status(400).send('Gagal merubah data');
+    }
+});
 router.get('/category', async function (req, res) {
     try {
         const dataCategory = await Category.findAll({});
@@ -158,5 +188,28 @@ router.post('/admin/merchandise/add', upload.single('image'), async function (re
     });
     return res.status(201).send({message: "merchandise berhasil ditambahkan kepada " + nameArtist.name})
 
+});
+router.get('/admin/merchandise', async function (req, res) {
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 12;
+    const offset = (page - 1) * limit || 0;
+
+    try {
+       const {rows, count} = await Merch.findAndCountAll({
+            limit,
+            offset,
+            include: [
+                {
+                    model: Artist, attributes: ['id_artist', 'name'],              
+             },
+            ],
+        });
+        return res.status(200).json({
+        data: rows,
+        total: count
+    });
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
 });
 module.exports = router;

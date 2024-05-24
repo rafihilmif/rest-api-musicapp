@@ -80,7 +80,7 @@ const storage = multer.diskStorage({
         const fileName = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
         cb(null, fileName);
         req.on('aborted', () => {
-            const fullFilePath = path.join('assets', 'image', 'album', fileName);
+            const fullFilePath = path.join('assets', 'image', 'avatar', fileName);
             file.stream.on('end', () => {
                 fs.unlink(fullFilePath, (err) => {
                     console.log(fullFilePath);
@@ -250,5 +250,179 @@ router.get('/admin/fans', async function (req, res) {
         return res.status(400).send('gagal memuat data');
     }
 });
+router.get('/admin/fan', async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Fans.findOne({
+            where: {
+                id_fans: {
+                    [Op.like] : id
+                }
+            }
+        });
+        return res.status(200).send(data);
+    } catch (error) {
+        return res.status(404).send('Data tidak ditemukan');
+    }
+});
+router.put('/admin/fan/remove/avatar', async function (req, res) {
+    const { id } = req.query;
+   
+    const pathAvatar = await Fans.findAll({
+        where: {
+            id_fans: {
+                [Op.like]: id
+            },
+           
+        },
+    });
+    let tempPathAvatar = null;
+   pathAvatar.forEach(element => {
+       tempPathAvatar = element.avatar;
+   });
+    
+    try {
+        const removeImage = await Fans.update({
+            avatar: null
+        },
+            {
+                where: {
+                    id_fans: {
+                        [Op.like]: id
+                    }
+                }
+            });
+    const fullFilePath = './public/assets/image/avatar/' + tempPathAvatar; 
+    fs.unlink(fullFilePath, (err) => {
+    if (err) {
+      console.error('Error deleting the image:', err);
+      return res.status(500).json({ message: 'Error deleting the image' });
+    }
+    res.status(200).json({ message: 'Image deleted successfully' });
+     });  
+    } catch (error) {
+        return res.status(400).send('Gagal menghapus avatar');
+    }
+});
 
+router.put('/admin/fan', upload.single('image'), async function (req, res) { 
+    
+    const { id } = req.query;
+    const { firstName, lastName, newPassword, birthDay, gender } = req.body;
+    const newAvatar = req.file;
+    const oldAvatarPath = req.body.oldAvatar;
+
+     const matchData = await Fans.findOne({
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+     });
+    if (!matchData) {
+        return res.status(404).send('Data tidak ditemukan');
+    }
+    
+    if (newAvatar != null && oldAvatarPath != null) {
+       let newAvatarUrl = matchData.avatar;
+        newAvatarUrl = newAvatar.filename;
+
+        const oldFilePath = './public/assets/image/avatar/' + oldAvatarPath; 
+        fs.unlink(oldFilePath, (err) => {
+            if (err) {
+                console.error('Error deleting the old image:', err);
+                return res.status(500).send('Error deleting the old image');
+           } 
+        });
+        
+        if (newPassword) {
+            const passwordHash = bcrypt.hashSync(newPassword, 10);
+            try {
+             await Fans.update({
+                first_name: firstName,
+                last_name: lastName,
+                password: passwordHash,
+                birth: birthDay,
+                gender: gender,
+                avatar: newAvatarUrl
+            }, {
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+        });
+            return res.status(200).send('Data berhasil diubah');
+         } catch (error) {
+            return res.status(400).send('Gagal merubah data');
+            }
+        }
+        else{
+            try {
+             await Fans.update({
+                first_name: firstName,
+                last_name: lastName,
+                birth: birthDay,
+                gender: gender,
+                avatar: newAvatarUrl
+            }, {
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send('Data berhasil diubah');
+    } catch (error) {
+        return res.status(400).send('Gagal merubah data');
+    }
+        }
+    }
+    else if(newAvatar == null){
+    
+        if (newPassword) {
+            const passwordHash = bcrypt.hashSync(newPassword, 10);
+            try {
+             await Fans.update({
+                first_name: firstName,
+                last_name: lastName,
+                password: passwordHash,
+                birth: birthDay,
+                gender: gender,
+                avatar: oldAvatarPath
+            }, {
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send('Data berhasil diubah');
+    } catch (error) {
+        return res.status(400).send('Gagal merubah data');
+    }
+        }
+        else {
+            try {
+             await Fans.update({
+                first_name: firstName,
+                last_name: lastName,
+                birth: birthDay,
+                gender: gender,
+                avatar: oldAvatarPath
+            }, {
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send('Data berhasil diubah');
+    } catch (error) {
+        return res.status(400).send('Gagal merubah data');
+    }
+        }
+    }
+   
+});
 module.exports = router;
