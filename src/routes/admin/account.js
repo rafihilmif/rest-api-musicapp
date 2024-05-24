@@ -145,7 +145,7 @@ router.post('/admin/artist/add', upload.single('image'), async function (req, re
     });
 });
 
-router.get('/admin/artist', async function (req, res) {
+router.get('/admin/artists', async function (req, res) {
     const { page, pageSize } = req.query;
     const limit = pageSize || 12;
     const offset = (page - 1) * limit || 0;
@@ -166,7 +166,182 @@ router.get('/admin/artist', async function (req, res) {
         return res.status(400).send('gagal memuat data');
     }
 });
+router.get('/admin/artist', async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Artist.findOne({
+            where: {
+                id_artist: {
+                    [Op.like] : id
+                }
+            }
+        });
+        return res.status(200).send(data);
+    } catch (error) {
+        return res.status(400).send('Gagal memuat data');
+    }
+});
+router.put('/admin/artist', upload.single('image'), async function (req, res) {
+    const { id } = req.query;
+    const { name, newPassword, formed, genre } = req.body;
+    const newAvatar = req.file;
+    const oldAvatarPath = req.body.oldAvatar;
 
+    const matchData = await Artist.findOne({
+        where: {
+            id_artist: {
+                [Op.like]: id
+            }
+        }
+    });
+    if (!matchData) {
+        return res.status(404).send('Data tidak ditemukan');
+    }
+    if (newAvatar != null && oldAvatarPath != null) {
+        let newAvatarUrl = matchData.avatar;
+        newAvatarUrl = newAvatar.filename;
+
+        const oldFilePath = './public/assets/image/avatar/' + oldAvatarPath; 
+        fs.unlink(oldFilePath, (err) => {
+            if (err) {
+                console.error('Error deleting the old image:', err);
+                return res.status(500).send('Error deleting the old image');
+            }
+        });
+
+        if (newPassword) {
+            const passwordHash = bcrypt.hashSync(newPassword, 10);
+            try {
+                await Artist.update({
+                    name: name,
+                    password: passwordHash,
+                    formed: formed,
+                    genre: genre,
+                    avatar: newAvatarUrl
+                }, {
+                    where: {
+                        id_artist: {
+                            [Op.like]: id
+                        }
+                    }
+                });
+                return res.status(200).send('Data berhasil diubah');
+            } catch (error) {
+                return res.status(400).send('Gagal merubah data');
+            }
+        }
+        else {
+            try {
+                await Artist.update({
+                    name: name,
+                    formed: formed,
+                    genre: genre,
+                    avatar: newAvatarUrl
+                }, {
+                    where: {
+                        id_artist: {
+                            [Op.like]: id
+                        }
+                    }
+                });
+                return res.status(200).send('Data berhasil diubah');
+            } catch (error) {
+                return res.status(400).send('Gagal merubah data');
+            }
+        }
+    }
+    else if (newAvatar == null) {
+    
+        if (newPassword) {
+            const passwordHash = bcrypt.hashSync(newPassword, 10);
+            try {
+                await Artist.update({
+                    name: name,
+                    password: passwordHash,
+                    formed: formed,
+                    genre: genre,
+                    avatar: oldAvatarPath
+                }, {
+                    where: {
+                        id_artist: {
+                            [Op.like]: id
+                        }
+                    }
+                });
+                return res.status(200).send('Data berhasil diubah');
+            } catch (error) {
+                return res.status(400).send('Gagal merubah data');
+            }
+        }
+        else {
+            try {
+                await Artist.update({
+                    name: name,
+                    formed: formed,
+                    genre: genre,
+                    avatar: oldAvatarPath
+                }, {
+                    where: {
+                        id_artist: {
+                            [Op.like]: id
+                        }
+                    }
+                });
+                return res.status(200).send('Data berhasil diubah');
+            } catch (error) {
+                return res.status(400).send('Gagal merubah data');
+            }
+        }
+    }
+});
+router.put('/admin/artist/remove/avatar', async function (req, res) {
+    const { id } = req.query;
+   
+    const pathAvatar = await Artist.findAll({
+        where: {
+            id_artist: {
+                [Op.like]: id
+            },
+           
+        },
+    });
+   let tempPathAvatar = null;
+   pathAvatar.forEach(element => {
+       tempPathAvatar = element.avatar;
+   });
+    try {
+        await Artist.update({
+            avatar: null
+        },
+            {
+                where: {
+                    id_artist: {
+                        [Op.like]: id
+                    }
+                }
+            });
+    const fullFilePath = './public/assets/image/avatar/' + tempPathAvatar; 
+    fs.unlink(fullFilePath, (err) => {
+    if (err) {
+      console.error('Error deleting the image:', err);
+      return res.status(500).json({ message: 'Error deleting the image' });
+    }
+    res.status(200).json({ message: 'Image deleted successfully' });
+     });  
+    } catch (error) {
+        return res.status(400).send('Gagal menghapus avatar');
+    }
+});
+router.get('/artist', async function (req, res) {
+    try {
+        const dataArtist= await Artist.findAll();
+        return res.status(200).json({
+            data: dataArtist
+        });
+    } catch (error) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
 router.post('/admin/fans/add', upload.single('image'), async function (req, res) {
     let { first_name, last_name, email, username, password, gender, birth} = req.body;
     const filePath = req.file.filename;
@@ -217,18 +392,6 @@ router.post('/admin/fans/add', upload.single('image'), async function (req, res)
         message: "berhasil menambahkan akun"
     });
 });
-
-router.get('/artist', async function (req, res) {
-    try {
-        const dataArtist= await Artist.findAll({});
-        return res.status(200).json({
-            data: dataArtist
-        });
-    } catch (error) {
-        return res.status(400).send('gagal memuat data');
-    }
-});
-
 router.get('/admin/fans', async function (req, res) {
     const { page, pageSize } = req.query;
     const limit = pageSize || 12;
@@ -304,9 +467,7 @@ router.put('/admin/fan/remove/avatar', async function (req, res) {
         return res.status(400).send('Gagal menghapus avatar');
     }
 });
-
 router.put('/admin/fan', upload.single('image'), async function (req, res) { 
-    
     const { id } = req.query;
     const { firstName, lastName, newPassword, birthDay, gender } = req.body;
     const newAvatar = req.file;
