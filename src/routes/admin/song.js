@@ -8,21 +8,11 @@ const Song = require("../../models/Song");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const Artist = require("../../models/Artist");
 
 const router = express.Router();
 
-router.get('/admin/album', async function (req, res) {
-    let { id_artist } = req.query;
-    
-    const data = await Album.findAll({
-        where: {
-            id_artist: id_artist
-        }
-    });
-    return res.status(200).json({
-            data
-        });
-});
+
 
 const storage = multer.diskStorage({
     destination: function name(req, file, cb) {
@@ -46,6 +36,18 @@ const storage = multer.diskStorage({
 
 });
 
+router.get('/admin/album', async function (req, res) {
+    let { id_artist } = req.query;
+    
+    const data = await Album.findAll({
+        where: {
+            id_artist: id_artist
+        }
+    });
+    return res.status(200).json({
+            data
+        });
+});
 const upload = multer({ storage: storage });
 router.post('/admin/song/add', upload.fields([{
   name: 'image', maxCount: 1
@@ -53,11 +55,10 @@ router.post('/admin/song/add', upload.fields([{
   name: 'audio', maxCount: 1
     }]), async function (req, res) { 
     
-    let {id_artist , id_album ,name, genre, release_date, credit, description } = req.body;
-
+    let {id_artist , album ,name, genre, release_date, credit, description } = req.body;
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
-
+    
     let newIdPrefix = "SNGS";
     let keyword = `%${newIdPrefix}%`
     let similiarUID = await Song.findAll({
@@ -68,22 +69,266 @@ router.post('/admin/song/add', upload.fields([{
         }
     });
     let newIdSong = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
-
-    const newSong = await Song.create({
-        id_song: newIdSong,
-        id_artist: id_artist,
-        id_album: id_album,
-        name: name,
-        genre: genre,
-        release_date: release_date,
-        credit: credit,
-        description: description,
-        image: graphicFile.filename,
-        audio: audioFile.filename,
-        created_at: Date.now(),
-        status: 1
+    const dataAlbum = await Album.findAll({
+        where: {
+            name: {
+                [Op.like] : album
+            }
+        }
     });
-    return res.status(200).send({ message: 'track berhasil ditambahkan' });
+    let idAlbum = null;
+    dataAlbum.forEach(element => {
+        idAlbum = element.id_album;
+    });
+    if (dataAlbum == null) {
+        await Song.create({
+            id_song: newIdSong,
+            id_artist: id_artist,
+            id_album: null,
+            name: name,
+            album: '-',
+            genre: genre,
+            release_date: release_date,
+            credit: credit,
+            description: description,
+            image: graphicFile.filename,
+            audio: audioFile.filename,
+            created_at: Date.now(),
+            status: 1
+            });
+           return res.status(200).send({ message: 'track berhasil ditambahkan' });
+    }
+    else if (dataAlbum != null) {
+        await Song.create({
+                id_song: newIdSong,
+                id_artist: id_artist,
+                id_album: idAlbum,
+                name: name,
+                album: album,
+                genre: genre,
+                release_date: release_date,
+                credit: credit,
+                description: description,
+                image: graphicFile.filename,
+                audio: audioFile.filename,
+                created_at: Date.now(),
+                status: 1
+            });
+           return res.status(200).send({ message: 'track berhasil ditambahkan' });
+    }
+});
+router.get('/admin/songs', async function (req, res) {
+   const { page, pageSize } = req.query;
+    const limit = pageSize || 6;
+    const offset = (page - 1) * limit || 0;
+
+    try {
+        const {rows, count} = await Song.findAndCountAll({
+            limit,
+            offset,
+             order: [
+                [Sequelize.literal(`id_song`), 'ASC'],
+            ],
+             include: [
+                {
+                    model: Artist, attributes: ['name'],
+                 }
+             ]
+        });
+        return res.status(200).json({
+        data: rows,
+        total: count
+    });
+    } catch (err) {
+        return res.status(400).send('gagal memuat data');
+    }
+});
+
+router.get('/admin/song', async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Song.findOne({
+            where: {
+                id_song: {
+                    [Op.like]: id
+                }
+            },
+            include: [
+                {
+                    model: Artist, attributes: ['name'],
+                 }
+             ]
+        });
+        return res.status(200).send(data)
+    } catch (error) {
+        return res.status(404).send('Gagal memuat data');
+    }
+});
+ 
+router.put('/admin/song', upload.fields([{
+    name: 'image', maxCount: 1
+}, {
+    name: 'audio', maxCount: 1
+    }]), async function (req, res) { 
+    const { id } = req.query;
+
+    let { album, name, genre, releaseDate } = req.body;
+    
+    const matchData = await Song.findAll({
+        where: {
+            id_song: {
+                [Op.like]: id
+            }
+        }
+    });
+    let oldPathSongImage = null;
+    let oldPathSongAudio = null;
+    matchData.forEach(element => {
+        oldPathSongImage = element.image;
+    });
+    matchData.forEach(element => {
+        oldPathSongAudio = element.audio;
+    });
+    if (!matchData) {
+        return res.status(404).send('Data tidak ditemukan');
+    }
+
+    if (req.files.image[0] == undefined && req.files.audio[0] != undefined) {
+        const newAudioSong = req.files.audio[0];
+        
+        let newAudioSongUrl = matchData.audio;
+        newAudioSongUrl = newAudioSong.filename;
+
+        const oldSongPath = './public/assets/audio/' + oldPathSongAudio;
+         fs.unlink(oldSongPath, (err) => {
+            if (err) {
+                console.error('Error deleting the old image:', err);
+                return res.status(500).send('Error deleting the old image');
+           } 
+         });
+        
+        try {
+            await Song.update({
+                name: name,
+                album: album,
+                genre: genre,
+                release_date: releaseDate,
+                audio: newAudioSongUrl,
+                image: oldPathSongImage
+            },
+                {
+                    where: {
+                        id_song: {
+                            [Op.like] : id
+                    }
+                }
+            });
+            return res.status(200).send('Data berhasil diubah')
+        } catch (error) {
+            return res.status(400).send('Gagal merubah data');
+        }
+    }
+
+    if (req.files.image[0] != undefined && req.files.audio[0] != undefined) {
+        const newAudioSong = req.files.audio[0];
+        const newImageSong = req.files.image[0];
+        
+        let newImageSongUrl = matchData.image;
+        newImageSongUrl = newImageSong.filename;
+
+        let newAudioSongUrl = matchData.audio;
+        newAudioSongUrl = newAudioSong.filename;
+        const oldImagePath = './public/assets/image/song/' + oldPathSongImage;
+         fs.unlink(oldImagePath, (err) => {
+            if (err) {
+                console.error('Error deleting the old image:', err);
+                return res.status(500).send('Error deleting the old image');
+           } 
+         });
+        const oldSongPath = './public/assets/audio/' + oldPathSongAudio;
+         fs.unlink(oldSongPath, (err) => {
+            if (err) {
+                console.error('Error deleting the old audio:', err);
+                return res.status(500).send('Error deleting the old image');
+           } 
+         });
+        
+        try {
+            await Song.update({
+                name: name,
+                album: album,
+                genre: genre,
+                release_date: releaseDate,
+                audio: newAudioSongUrl,
+                image: newImageSongUrl
+            }, {
+                where: {
+                    id_song: {
+                    [Op.like] : id
+                }
+            }});
+            return res.status(200).send('Data berhasil diubah')
+        } catch (error) {
+            return res.status(400).send('Gagal merubah data');
+        }
+    }
+    if (req.files.image[0] != undefined && req.files.audio[0] == undefined) {
+        const newImageSong = req.files.image[0];
+
+        let newImageSongUrl = matchData.image;
+        newImageSongUrl = newImageSong.filename;
+
+       const oldImagePath = './public/assets/image/song/' + oldPathSongImage;
+         fs.unlink(oldImagePath, (err) => {
+            if (err) {
+                console.error('Error deleting the old image:', err);
+                return res.status(500).send('Error deleting the old image');
+           } 
+         });
+        
+        try {
+            await Song.update({
+                name: name,
+                album: album,
+                genre: genre,
+                release_date: releaseDate,
+                audio: oldPathSongAudio,
+                image: newImageSongUrl
+            },
+                {
+                    where: {
+                        id_song: {
+                        [Op.like] : id
+                    }
+                }
+            });
+            return res.status(200).send('Data berhasil diubah')
+        } catch (error) {
+            return res.status(400).send('Gagal merubah data');
+        }
+    }
+    if (req.files.image[0] == undefined && req.files.audio[0] == undefined) {
+        try {
+            await Song.update({
+                name: name,
+                album: album,
+                genre: genre,
+                release_date: releaseDate,
+                audio: oldPathSongAudio,
+                image: oldPathSongImage
+            },
+                {
+                    where: {
+                        id_song: {
+                        [Op.like] : id
+                    }
+                }
+            });
+            return res.status(200).send('Data berhasil diubah')
+        } catch (error) {
+            return res.status(400).send('Gagal merubah data');
+        }
+    }
 });
 
 module.exports = router;

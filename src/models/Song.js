@@ -27,6 +27,10 @@ Song.init(
         name: {
             type: DataTypes.STRING(255),
             allowNull:false
+    },
+         album: {
+            type: DataTypes.STRING(255),
+            allowNull:false
         },
         genre: {
             type: DataTypes.STRING(255),

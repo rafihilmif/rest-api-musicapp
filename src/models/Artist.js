@@ -67,7 +67,7 @@ Artist.init(
     {
       sequelize,
       timestamps: false,
-      modelName: "Artis",
+      modelName: "Artist",
       tableName: "artist",
     }
   );

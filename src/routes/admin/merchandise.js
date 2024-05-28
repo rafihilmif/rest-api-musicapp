@@ -95,7 +95,7 @@ router.get('/admin/categories', async function (req, res) {
             offset,
              order: [
                 [Sequelize.literal(`id_category`), 'ASC'],
-            ],
+            ]
         });
         return res.status(200).json({
         data: rows,
@@ -189,7 +189,7 @@ router.post('/admin/merchandise/add', upload.single('image'), async function (re
     return res.status(201).send({message: "merchandise berhasil ditambahkan kepada " + nameArtist.name})
 
 });
-router.get('/admin/merchandise', async function (req, res) {
+router.get('/admin/merchs', async function (req, res) {
     const { page, pageSize } = req.query;
     const limit = pageSize || 12;
     const offset = (page - 1) * limit || 0;
@@ -197,12 +197,12 @@ router.get('/admin/merchandise', async function (req, res) {
     try {
        const {rows, count} = await Merch.findAndCountAll({
             limit,
-            offset,
-            include: [
-                {
-                    model: Artist, attributes: ['id_artist', 'name'],              
-             },
-            ],
+           offset,
+           include: [
+               {
+                    model: Artist, attributes:['avatar']
+                }
+            ]
         });
         return res.status(200).json({
         data: rows,
@@ -211,5 +211,24 @@ router.get('/admin/merchandise', async function (req, res) {
     } catch (err) {
         return res.status(400).send('gagal memuat data');
     }
+});
+router.get('/admin/merch', async function (req, res) {
+    const { id } = req.query;
+
+    try {
+        const data = await Merch.findOne({
+            where: {
+                id_merchandise: {
+                    [Op.like]: id
+                }
+            }
+        });
+        return res.status(200).send(data)
+    } catch (error) {
+        return res.status(404).send('Gagal memuat data');
+    }
+});
+router.put('/admin/merch', upload.single('image'), async function (req, res) {
+    
 });
 module.exports = router;
