@@ -51,42 +51,46 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-router.post("/album/add", upload.single("image"), async function (req, res) {
-  let { name, description } = req.body;
-  let { image } = req.file;
+router.post(
+  "/artist/album/add",
+  upload.single("image"),
+  async function (req, res) {
+    let { name, description } = req.body;
+    let { image } = req.file;
 
-  const paths = `${req.protocol}://${req.get("host")}/assets/image/album/${req.file.filename}`;
-  const filePath = req.file.filename;
+    const paths = `${req.protocol}://${req.get("host")}/assets/image/album/${req.file.filename}`;
+    const filePath = req.file.filename;
 
-  const token = req.headers.authorization.split(" ")[1];
-  let userdata = jwt.verify(token, JWT_KEY);
+    const token = req.headers.authorization.split(" ")[1];
+    let userdata = jwt.verify(token, JWT_KEY);
 
-  let newIdPrefix = "ALBM";
-  let keyword = `%${newIdPrefix}%`;
-  let similiarUID = await Album.findAll({
-    where: {
-      id_album: {
-        [Op.like]: keyword,
+    let newIdPrefix = "ALBM";
+    let keyword = `%${newIdPrefix}%`;
+    let similiarUID = await Album.findAll({
+      where: {
+        id_album: {
+          [Op.like]: keyword,
+        },
       },
-    },
-  });
-  let newIdAlbum =
-    newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-  const newAlbum = await Album.create({
-    id_album: newIdAlbum,
-    id_artist: userdata.id_artist,
-    name: name,
-    description: description,
-    image: filePath,
-    created_at: Date.now(),
-    status: 1,
-  });
-  return res
-    .status(201)
-    .send({ message: "album berhasil ditambahkan oleh " + userdata.name });
-});
+    });
+    let newIdAlbum =
+      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    const newAlbum = await Album.create({
+      id_album: newIdAlbum,
+      id_artist: userdata.id_artist,
+      name: name,
+      description: description,
+      image: filePath,
+      created_at: Date.now(),
+      status: 1,
+    });
+    return res
+      .status(201)
+      .send({ message: "album berhasil ditambahkan oleh " + userdata.name });
+  },
+);
 
-router.get("/album", async function (req, res) {
+router.get("/artist/album", async function (req, res) {
   const { page, pageSize } = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;

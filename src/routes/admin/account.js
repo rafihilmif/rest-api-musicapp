@@ -182,7 +182,7 @@ router.get("/admin/artist", async function (req, res) {
 router.put("/admin/artist", upload.single("image"), async function (req, res) {
   const { id } = req.query;
   const newData = req.body;
-  
+
   try {
     const artist = await Artist.findByPk(id);
     if (!artist) {
@@ -194,7 +194,7 @@ router.put("/admin/artist", upload.single("image"), async function (req, res) {
         saveNewUpdateData[key] = newData[key];
       }
     });
-    
+
     if (req.file) {
       const oldFilePath = "./public/assets/image/avatar/" + artist.avatar;
       fs.unlink(oldFilePath, (err) => {
@@ -203,7 +203,7 @@ router.put("/admin/artist", upload.single("image"), async function (req, res) {
           return res.status(500).send("Error deleting the old image");
         }
       });
-      saveNewUpdateData.avatar = req.file.filename; 
+      saveNewUpdateData.avatar = req.file.filename;
     }
     if (newData.password !== undefined) {
       const passwordHash = bcrypt.hashSync(req.body.password, 10);
@@ -253,7 +253,7 @@ router.put("/admin/artist/remove/avatar", async function (req, res) {
     return res.status(400).send("Gagal menghapus avatar");
   }
 });
-router.get("/artist", async function (req, res) {
+router.get("/admin/artist", async function (req, res) {
   try {
     const dataArtist = await Artist.findAll();
     return res.status(200).json({
@@ -397,7 +397,7 @@ router.put("/admin/fan/remove/avatar", async function (req, res) {
 router.put("/admin/fan", upload.single("image"), async function (req, res) {
   const { id } = req.query;
   const newData = req.body;
-  
+
   try {
     const fan = await Fans.findByPk(id);
     if (!fan) {
@@ -409,7 +409,7 @@ router.put("/admin/fan", upload.single("image"), async function (req, res) {
         saveNewUpdateData[key] = newData[key];
       }
     });
-    
+
     if (req.file) {
       const oldFilePath = "./public/assets/image/avatar/" + fan.avatar;
       fs.unlink(oldFilePath, (err) => {
@@ -418,7 +418,7 @@ router.put("/admin/fan", upload.single("image"), async function (req, res) {
           return res.status(500).send("Error deleting the old image");
         }
       });
-      saveNewUpdateData.avatar = req.file.filename; 
+      saveNewUpdateData.avatar = req.file.filename;
     }
     if (newData.password !== undefined) {
       const passwordHash = bcrypt.hashSync(req.body.password, 10);

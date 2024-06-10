@@ -190,45 +190,44 @@ router.put(
     },
   ]),
   async function (req, res) {
-
-  const { id } = req.query;
-  const newData = req.body;
-  try {
-    const song = await Song.findByPk(id);
-    if (!song) {
-      return res.status(404).send("Data tidak ditemukan");
-    }
-    const saveNewUpdateData = {};
-    Object.keys(newData).forEach((key) => {
-      if (newData[key] !== undefined) {
-        saveNewUpdateData[key] = newData[key];
+    const { id } = req.query;
+    const newData = req.body;
+    try {
+      const song = await Song.findByPk(id);
+      if (!song) {
+        return res.status(404).send("Data tidak ditemukan");
       }
-    });
-    
-    if (req.files['image']) {
-      const oldFilePath = "./public/assets/image/song/" + song.image;
-      fs.unlink(oldFilePath, (err) => {
-        if (err) {
-          console.error("Error deleting the old image:", err);
-          return res.status(500).send("Error deleting the old image");
+      const saveNewUpdateData = {};
+      Object.keys(newData).forEach((key) => {
+        if (newData[key] !== undefined) {
+          saveNewUpdateData[key] = newData[key];
         }
       });
-      saveNewUpdateData.image = req.files['image'][0].filename;
+
+      if (req.files["image"]) {
+        const oldFilePath = "./public/assets/image/song/" + song.image;
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting the old image:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+        saveNewUpdateData.image = req.files["image"][0].filename;
+      }
+      if (req.files["audio"]) {
+        const oldFilePath = "./public/assets/audio/" + song.audio;
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting the old audio:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+        saveNewUpdateData.audio = req.files["audio"][0].filename;
+      }
+      await song.update(saveNewUpdateData);
+    } catch (error) {
+      return res.status(400).send("Gagal merubah data");
     }
-   if (req.files['audio']) {
-      const oldFilePath = "./public/assets/audio/" + song.audio;
-      fs.unlink(oldFilePath, (err) => {
-        if (err) {
-          console.error("Error deleting the old audio:", err);
-          return res.status(500).send("Error deleting the old image");
-        }
-      });
-      saveNewUpdateData.audio = req.files['audio'][0].filename;
-    }
-    await song.update(saveNewUpdateData);
-  } catch (error) {
-    return res.status(400).send("Gagal merubah data");
-  }
-  }
+  },
 );
 module.exports = router;

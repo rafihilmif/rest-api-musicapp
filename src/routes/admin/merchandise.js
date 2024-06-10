@@ -271,12 +271,12 @@ router.put("/admin/merch", upload.single("image"), async function (req, res) {
           return res.status(500).send("Error deleting the old image");
         }
       });
-      merch.image = req.file.filename; 
+      merch.image = req.file.filename;
     }
-   
+
     await merch.save();
 
-    return res.status(200).send('Data berhasil diubah');
+    return res.status(200).send("Data berhasil diubah");
   } catch (error) {
     return res.status(400).send("Gagal merubah data");
   }
