@@ -93,7 +93,7 @@ router.post(
   },
 );
 //SHOW ALL SONG
-router.get("/song", async function (req, res) {
+router.get("/artist/song", async function (req, res) {
   const { page, pageSize } = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;

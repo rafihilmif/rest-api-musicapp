@@ -20,6 +20,7 @@ const admin_plan = require("./routes/admin/plan");
 const general_song = require("./routes/general/song");
 const general_album = require("./routes/general/album");
 const general_artist = require("./routes/general/artist");
+const general_merchandise = require('./routes/general/merchandise');
 
 const Artist = require("./models/Artist");
 const Merch = require("./models/Merch");
@@ -70,7 +71,7 @@ app.use("/api", admin_plan);
 app.use("/api", general_album);
 app.use("/api", general_song);
 app.use("/api", general_artist);
-
+app.use("/api", general_merchandise);
 app.listen(app.get("port"), () => {
   console.log(`Server started at http://localhost:${app.get("port")}`);
 });

@@ -2,34 +2,34 @@ const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
-const Artist = require("../../models/Artist");
+const Merch = require("../../models/Merch");
 const { func } = require("joi");
 
 const router = express.Router();
-router.get("/artists", async function (req, res) {
-  const { page, pageSize } = req.query;
-  const limit = pageSize || 6;
-  const offset = (page - 1) * limit || 0;
+
+router.get("/collection/merchandise", async function (req, res) {
+  const { id} = req.query;
 
   try {
-    const { rows, count } = await Artist.findAndCountAll({
-      limit,
-      offset,
-      order: [[Sequelize.literal(`id_artist`), "ASC"]],
+    const data = await Merch.findAll({
+      limit: 6,
+        order: [[Sequelize.literal(`id_merchandise`), "ASC"]],
+        where: {
+            id_artist: {
+              [Op.like] :id
+          }
+      }
     });
-    return res.status(200).json({
-      data: rows,
-      total: count,
-    });
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(400).send("gagal memuat data");
   }
 });
 
-router.get("/artist", async function (req, res) {
+router.get("/merchandise", async function (req, res) {
   const { id } = req.query;
   try {
-    const data = await Artist.findOne({
+    const data = await Merch.findOne({
       where: {
         id_artist: {
           [Op.like]: id

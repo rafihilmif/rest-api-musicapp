@@ -51,7 +51,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 router.post(
-  "/merchandise/add",
+  "/artist/merchandise/add",
   upload.single("image"),
   async function (req, res) {
     let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description } =
@@ -96,7 +96,7 @@ router.post(
   },
 );
 //SHOW ALL EVENT
-router.get("/merchandise", async function (req, res) {
+router.get("/artist/merchandise", async function (req, res) {
   const { page, pageSize } = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;

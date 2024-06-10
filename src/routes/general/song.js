@@ -3,12 +3,7 @@ const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
-const Genre = require("../../models/Category");
-const Album = require("../../models/Album");
 const Song = require("../../models/Song");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const Artist = require("../../models/Artist");
 
 const router = express.Router();
@@ -38,5 +33,19 @@ router.get("/songs", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
-
+router.get("/collection/song", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Song.findAll({
+      where: {
+        id_artist: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data lagu dari artist' + id);
+  }
+});
 module.exports = router;

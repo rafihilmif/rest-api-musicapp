@@ -53,6 +53,23 @@ router.get("/album", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+router.get("/collection/album", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Album.findAll({
+      where: {
+     
+        id_artist: {
+          [Op.like]: id
+        }
+      },
+         limit: 6,
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data album');
+  }
+});
 router.get("/album/song", async function (req, res) {
   const { id } = req.query;
   try {
