@@ -41,7 +41,13 @@ router.get("/collection/song", async function (req, res) {
         id_artist: {
           [Op.like]: id
         }
-      }
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+        },
+      ], 
     });
     return res.status(200).json(data);
   } catch (error) {
