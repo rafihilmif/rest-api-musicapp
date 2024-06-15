@@ -10,6 +10,7 @@ const shows = require("./routes/artist/shows");
 const login = require("./routes/login");
 const song = require("./routes/artist/song");
 const merch = require("./routes/artist/merchandise");
+const accountArtist = require('./routes/artist/account');
 
 const admin_merch = require("./routes/admin/merchandise");
 const admin_genre = require("./routes/admin/genre");
@@ -61,6 +62,7 @@ app.use("/api", shows);
 app.use("/api", login);
 app.use("/api", song);
 app.use("/api", merch);
+app.use("/api", accountArtist);
 
 app.use("/api", admin_merch);
 app.use("/api", admin_genre);

@@ -14,20 +14,19 @@ const fs = require("fs");
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: function name(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, "./public/assets/image/album");
   },
   fileFilter: function name(req, file, cb) {
     if (
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/gif"
+      file.mimetype == "image/jpeg"
     ) {
       cb(null, true);
     } else {
       cb(null, false);
-      cb(new Error("Only .png, .gif, .jpg and .jpeg format allowed!"));
+      cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
     }
   },
   filename: function name(req, file, cb) {
@@ -35,19 +34,7 @@ const storage = multer.diskStorage({
     const fileName =
       file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname);
     cb(null, fileName);
-    req.on("aborted", () => {
-      const fullFilePath = path.join("assets", "image", "album", fileName);
-      file.stream.on("end", () => {
-        fs.unlink(fullFilePath, (err) => {
-          console.log(fullFilePath);
-          if (err) {
-            throw err;
-          }
-        });
-      });
-      file.stream.emit("end");
-    });
-  },
+    },
 });
 
 const upload = multer({ storage: storage });
@@ -55,14 +42,10 @@ router.post(
   "/artist/album/add",
   upload.single("image"),
   async function (req, res) {
-    let { name, description } = req.body;
-    let { image } = req.file;
+    const { id } = req.query;
+    const { name, description, status } = req.body;
 
-    const paths = `${req.protocol}://${req.get("host")}/assets/image/album/${req.file.filename}`;
     const filePath = req.file.filename;
-
-    const token = req.headers.authorization.split(" ")[1];
-    let userdata = jwt.verify(token, JWT_KEY);
 
     let newIdPrefix = "ALBM";
     let keyword = `%${newIdPrefix}%`;
@@ -75,41 +58,40 @@ router.post(
     });
     let newIdAlbum =
       newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    const newAlbum = await Album.create({
+    
+    await Album.create({
       id_album: newIdAlbum,
-      id_artist: userdata.id_artist,
+      id_artist: id,
       name: name,
       description: description,
       image: filePath,
       created_at: Date.now(),
-      status: 1,
+      status: status,
     });
     return res
       .status(201)
-      .send({ message: "album berhasil ditambahkan oleh " + userdata.name });
+      .send({ message: "album berhasil " + name + " ditambahkan"});
   },
 );
 
-router.get("/artist/album", async function (req, res) {
+router.get("/artist/collection/album", async function (req, res) {
+  const { id } = req.query;
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
-  const token = req.headers.authorization.split(" ")[1];
-  // let token = req.header('x-auth-token');
   try {
-    let userdata = jwt.verify(token, JWT_KEY);
     const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist:id,
       },
       include: [
         {
           model: Artist,
-          attributes: ["id_artist", "name"],
+          attributes: ["name"],
           where: {
             id_artist: {
-              [Op.like]: userdata.id_artist,
+              [Op.like]: id,
             },
           },
         },

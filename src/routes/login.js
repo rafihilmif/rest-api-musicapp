@@ -126,6 +126,7 @@ router.post("/auth/login", async function (req, res) {
   });
 
   if (existArtist.length > 0) {
+
     const passwordArtist = await Artist.findAll({
       where: {
         email: email,
@@ -137,30 +138,12 @@ router.post("/auth/login", async function (req, res) {
     });
     let passwordHashArtist = tempPassword;
     if (bcrypt.compareSync(password, passwordHashArtist)) {
-      const tempDataArtist = await Artist.findOne({
+      const user = await Artist.findOne({
         where: {
           email: email,
         },
       });
-      let token = jwt.sign(
-        {
-          id_artist: tempDataArtist.id_artist,
-          email: tempDataArtist.email,
-          username: tempDataArtist.username,
-          name: tempDataArtist.name,
-          formed: tempDataArtist.formend,
-          genre: tempDataArtist.genre,
-          role: tempDataArtist.role,
-          description: tempDataArtist.description,
-          avatar: tempDataArtist.avatar,
-          status: tempDataArtist.status,
-        },
-        JWT_KEY,
-      );
-      return res.status(200).send({
-        message: "Successfully logged Artist " + email,
-        token: token,
-      });
+      return res.status(200).json(user);
     } else {
       return res.status(400).send({
         message: "Password salah, login gagal",
@@ -178,31 +161,13 @@ router.post("/auth/login", async function (req, res) {
     });
     let passwordHashFans = tempPassword;
     if (bcrypt.compareSync(password, passwordHashFans)) {
-      const tempDataFans = await Fans.findOne({
+      const user = await Fans.findOne({
         where: {
           email: email,
         },
       });
-      let token = jwt.sign(
-        {
-          id_fans: tempDataFans.id_fans,
-          email: tempDataFans.email,
-          username: tempDataFans.username,
-          first_name: tempDataFans.first_name,
-          last_name: tempDataFans.last_name,
-          birth: tempDataFans.birth,
-          phone: tempDataFans.phone,
-          role: tempDataFans.role,
-          gender: tempDataFans.gender,
-          avatar: tempDataFans.avatar,
-          status: tempDataFans.status,
-        },
-        JWT_KEY,
-      );
-      return res.status(200).send({
-        message: "Successefully logged Fans " + email,
-        accessToken: token,
-      });
+
+      return res.status(200).json(user);
     } else {
       return res.status(400).send({
         message: "Password salah, login gagal",

@@ -54,13 +54,11 @@ router.post(
   "/artist/merchandise/add",
   upload.single("image"),
   async function (req, res) {
-    let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description } =
+    const { id } = req.query;
+    let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, status } =
       req.body;
 
     const filePath = req.file.filename;
-    // const token = req.headers.authorization.split(' ')[1];
-    let token = req.header("x-auth-token");
-    const userdata = jwt.verify(token, JWT_KEY);
 
     let newIdPrefix = "MRCH";
     let keyword = `%${newIdPrefix}%`;
@@ -72,13 +70,12 @@ router.post(
       },
     });
 
-    let newIdMerchandise =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    const newMerch = await Merch.create({
+    let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    await Merch.create({
       id_merchandise: newIdMerchandise,
-      id_artist: userdata.id_artist,
+      id_artist: id,
       name: name,
-      artist: userdata.name,
+      artist: artist,
       category: category,
       s: sizeS,
       m: sizeM,
@@ -88,10 +85,10 @@ router.post(
       description: description,
       image: filePath,
       created_at: Date.now(),
-      status: 1,
+      status: status,
     });
     return res.status(201).send({
-      message: "merchandise berhasil ditambahkan oleh " + userdata.name,
+      message: "merchandise berhasil ditambahkan oleh " + artist,
     });
   },
 );

@@ -41,4 +41,13 @@ router.get("/merchandise", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+router.get("/category", async function (req, res) {
+  try {
+    const data = await Category.findAll({});
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+
 module.exports = router;
