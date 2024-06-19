@@ -50,14 +50,12 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-router.post("/shows/add", upload.single("image"), async function (req, res) {
-  let { name, date, location, contact, description } = req.body;
+router.post("/artist/shows/add", upload.single("image"), async function (req, res) {
+  const { id } = req.query;
+  let { name, date, location, contact, description, status } = req.body;
   let { image } = req.file;
 
   const filePath = req.file.filename;
-
-  const token = req.headers.authorization.split(" ")[1];
-  let userdata = jwt.verify(token, JWT_KEY);
 
   let newIdPrefix = "SWHS";
   let keyword = `%${newIdPrefix}%`;
@@ -70,9 +68,9 @@ router.post("/shows/add", upload.single("image"), async function (req, res) {
   });
   let newIdShows =
     newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-  const newShows = await Shows.create({
+  await Shows.create({
     id_show: newIdShows,
-    id_artist: userdata.id_artist,
+    id_artist: id,
     name: name,
     duedate: date,
     location: location,
@@ -80,11 +78,11 @@ router.post("/shows/add", upload.single("image"), async function (req, res) {
     description: description,
     image: filePath,
     created_at: Date.now(),
-    status: 1,
+    status: status,
   });
   return res
     .status(201)
-    .send({ message: "shows berhasil ditambahkan oleh " + userdata.name });
+    .send({ message: 'shows berhasil ditambahkan'});
 });
 //SHOW ALL EVENT
 router.get("/shows", async function (req, res) {

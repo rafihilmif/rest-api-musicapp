@@ -9,6 +9,7 @@ const multer = require("multer");
 const path = require("path");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
+const Album = require("../../models/Album");
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post(
-  "/song/add",
+  "/artist/song/add",
   upload.fields([
     {
       name: "image",
@@ -54,14 +55,12 @@ router.post(
     },
   ]),
   async function (req, res) {
-    let { album, name, genre, release_date, credit, description } = req.body;
+    const { id } = req.query;
+    let { album, name, genre, release_date, credit, lyric, status } = req.body;
 
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
 
-    const token = req.headers.authorization.split(" ")[1];
-    let userdata = jwt.verify(token, JWT_KEY);
-    // const token = req.headers('x-auth-token');
 
     let newIdPrefix = "SNGS";
     let keyword = `%${newIdPrefix}%`;
@@ -74,20 +73,32 @@ router.post(
     });
     let newIdSong =
       newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    const dataAlbum = await Album.findAll({
+      where: {
+        name: {
+          [Op.like]: album,
+        },
+      },
+    });
+    let idAlbum = null;
+    dataAlbum.forEach((element) => {
+      idAlbum = element.id_album;
+    });
 
-    const newSong = await Song.create({
+    await Song.create({
       id_song: newIdSong,
-      id_artist: userdata.id_artist,
-      id_album: album,
+      id_artist: id,
+      id_album: idAlbum,
+      album: album,
       name: name,
       genre: genre,
       release_date: release_date,
       credit: credit,
-      description: description,
+      lyric: lyric,
       image: graphicFile.filename,
       audio: audioFile.filename,
       created_at: Date.now(),
-      status: 1,
+      status: status,
     });
     return res.status(200).send({ message: "track berhasil ditambahkan" });
   },

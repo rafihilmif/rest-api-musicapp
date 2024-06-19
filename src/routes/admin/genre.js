@@ -91,15 +91,6 @@ router.put("/admin/genre", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
-router.get("/genre", async function (req, res) {
-  try {
-    const dataGenre = await Genre.findAll({});
-    return res.status(200).json({
-      data: dataGenre,
-    });
-  } catch (error) {
-    return res.status(400).send("gagal memuat data");
-  }
-});
+
 
 module.exports = router;

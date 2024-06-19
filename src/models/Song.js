@@ -41,11 +41,11 @@ Song.init(
       allowNull: false,
     },
     credit: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
-    description: {
-      type: DataTypes.STRING(255),
+    lyric: {
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     image: {

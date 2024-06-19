@@ -65,7 +65,7 @@ router.post(
     },
   ]),
   async function (req, res) {
-    let { id_artist, album, name, genre, release_date, credit, description } =
+    let { id_artist, album, name, genre, release_date, credit, lyric } =
       req.body;
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
@@ -102,7 +102,7 @@ router.post(
         genre: genre,
         release_date: release_date,
         credit: credit,
-        description: description,
+        lyric: lyric,
         image: graphicFile.filename,
         audio: audioFile.filename,
         created_at: Date.now(),
@@ -119,7 +119,7 @@ router.post(
         genre: genre,
         release_date: release_date,
         credit: credit,
-        description: description,
+        lyric: lyric,
         image: graphicFile.filename,
         audio: audioFile.filename,
         created_at: Date.now(),

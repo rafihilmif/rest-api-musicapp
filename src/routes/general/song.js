@@ -5,6 +5,7 @@ const { Op, Sequelize } = require("sequelize");
 
 const Song = require("../../models/Song");
 const Artist = require("../../models/Artist");
+const Genre = require("../../models/Genre");
 
 const router = express.Router();
 
@@ -53,5 +54,14 @@ router.get("/collection/song", async function (req, res) {
   } catch (error) {
     return res.status(400).send('gagal memuat data lagu dari artist' + id);
   }
+});
+router.get("/genre", async function (req, res) {
+  const data = await Genre.findAll();
+    return res.status(200).json(data);
+  // try {
+    
+  // } catch (error) {
+  //   return res.status(400).send("gagal memuat data");
+  // }
 });
 module.exports = router;

@@ -138,16 +138,6 @@ router.put("/admin/category", async function (req, res) {
     return res.status(400).send("Gagal merubah data");
   }
 });
-router.get("/category", async function (req, res) {
-  try {
-    const dataCategory = await Category.findAll({});
-    return res.status(200).json({
-      data: dataCategory,
-    });
-  } catch (error) {
-    return res.status(400).send("gagal memuat data");
-  }
-});
 
 router.post(
   "/admin/merchandise/add",

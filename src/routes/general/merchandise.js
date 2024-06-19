@@ -4,6 +4,7 @@ const { Op, Sequelize } = require("sequelize");
 
 const Merch = require("../../models/Merch");
 const { func } = require("joi");
+const Category = require("../../models/Category");
 
 const router = express.Router();
 
@@ -42,12 +43,13 @@ router.get("/merchandise", async function (req, res) {
   }
 });
 router.get("/category", async function (req, res) {
-  try {
-    const data = await Category.findAll({});
+   const data = await Category.findAll({});
     return res.status(200).json(data);
-  } catch (error) {
-    return res.status(400).send("gagal memuat data");
-  }
+  // try {
+   
+  // } catch (error) {
+  //   return res.status(400).send("gagal memuat data");
+  // }
 });
 
 module.exports = router;

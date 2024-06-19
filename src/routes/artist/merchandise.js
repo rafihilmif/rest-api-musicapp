@@ -92,21 +92,16 @@ router.post(
     });
   },
 );
-//SHOW ALL EVENT
-router.get("/artist/merchandise", async function (req, res) {
+router.get("/artist/collection/merchandise", async function (req, res) {
+  const { id } = req.query;
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 15;
   const offset = (page - 1) * limit || 0;
-
-  const token = req.headers.authorization.split(" ")[1];
-  // let token = req.header('x-auth-token');
-
-  let userdata = jwt.verify(token, JWT_KEY);
 
   try {
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: [
         {
@@ -114,7 +109,7 @@ router.get("/artist/merchandise", async function (req, res) {
           attributes: ["id_artist", "name"],
           where: {
             id_artist: {
-              [Op.like]: userdata.id_artist,
+              [Op.like]: id,
             },
           },
         },
