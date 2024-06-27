@@ -61,7 +61,6 @@ router.post(
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
 
-
     let newIdPrefix = "SNGS";
     let keyword = `%${newIdPrefix}%`;
     let similiarUID = await Song.findAll({
@@ -104,20 +103,16 @@ router.post(
   },
 );
 //SHOW ALL SONG
-router.get("/artist/song", async function (req, res) {
+router.get("/artist/collection/song", async function (req, res) {
+  const { id } = req.query;
   const { page, pageSize } = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;
 
-  const token = req.headers.authorization.split(" ")[1];
-  // let token = req.header('x-auth-token');
-
-  let userdata = jwt.verify(token, JWT_KEY);
-
   try {
     const { rows, count } = await Song.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: [
         {
@@ -125,7 +120,7 @@ router.get("/artist/song", async function (req, res) {
           attributes: ["id_artist", "name"],
           where: {
             id_artist: {
-              [Op.like]: userdata.id_artist,
+              [Op.like]: id,
             },
           },
         },
@@ -142,5 +137,20 @@ router.get("/artist/song", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+router.get("/artist/song", async function (req, res) {
+  const { id } = req.query;
+  const { limit } = req.query || 5;
 
+  try {
+    const data = await Song.findAll({
+      where: {
+        id_artist: id,
+      },
+      limit: limit,
+    });
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
 module.exports = router;

@@ -1,4 +1,3 @@
-
 const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
@@ -40,26 +39,26 @@ router.get("/collection/song", async function (req, res) {
     const data = await Song.findAll({
       where: {
         id_artist: {
-          [Op.like]: id
-        }
+          [Op.like]: id,
+        },
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
         },
-      ], 
+      ],
     });
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send('gagal memuat data lagu dari artist' + id);
+    return res.status(400).send("gagal memuat data lagu dari artist" + id);
   }
 });
 router.get("/genre", async function (req, res) {
   const data = await Genre.findAll();
-    return res.status(200).json(data);
+  return res.status(200).json(data);
   // try {
-    
+
   // } catch (error) {
   //   return res.status(400).send("gagal memuat data");
   // }

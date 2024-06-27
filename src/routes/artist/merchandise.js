@@ -48,50 +48,53 @@ const storage = multer.diskStorage({
     });
   },
 });
+const upload = multer({ 
+  storage: storage,
+  // Limit to 5 files
+  limits: { files: 5 }
+});
+// router.post(
+//   "/artist/merchandise/add",
+//   upload.single("image"),
+//   async function (req, res) {
+//     const { id } = req.query;
+//     let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, status } =
+//       req.body;
 
-const upload = multer({ storage: storage });
-router.post(
-  "/artist/merchandise/add",
-  upload.single("image"),
-  async function (req, res) {
-    const { id } = req.query;
-    let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, status } =
-      req.body;
+//     const filePath = req.file.filename;
 
-    const filePath = req.file.filename;
+//     let newIdPrefix = "MRCH";
+//     let keyword = `%${newIdPrefix}%`;
+//     let similiarUID = await Merch.findAll({
+//       where: {
+//         id_merchandise: {
+//           [Op.like]: keyword,
+//         },
+//       },
+//     });
 
-    let newIdPrefix = "MRCH";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Merch.findAll({
-      where: {
-        id_merchandise: {
-          [Op.like]: keyword,
-        },
-      },
-    });
-
-    let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    await Merch.create({
-      id_merchandise: newIdMerchandise,
-      id_artist: id,
-      name: name,
-      artist: artist,
-      category: category,
-      s: sizeS,
-      m: sizeM,
-      l: sizeL,
-      xl: sizeXL,
-      price: price,
-      description: description,
-      image: filePath,
-      created_at: Date.now(),
-      status: status,
-    });
-    return res.status(201).send({
-      message: "merchandise berhasil ditambahkan oleh " + artist,
-    });
-  },
-);
+//     let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+//     await Merch.create({
+//       id_merchandise: newIdMerchandise,
+//       id_artist: id,
+//       name: name,
+//       artist: artist,
+//       category: category,
+//       s: sizeS,
+//       m: sizeM,
+//       l: sizeL,
+//       xl: sizeXL,
+//       price: price,
+//       description: description,
+//       image: filePath,
+//       created_at: Date.now(),
+//       status: status,
+//     });
+//     return res.status(201).send({
+//       message: "merchandise berhasil ditambahkan oleh " + artist,
+//     });
+//   },
+// );
 router.get("/artist/collection/merchandise", async function (req, res) {
   const { id } = req.query;
   const { page, pageSize } = req.query;
@@ -127,53 +130,59 @@ router.get("/artist/collection/merchandise", async function (req, res) {
   }
 });
 
-//FAILED UPLOAD MULTI IMAGE
+router.post('/artist/merchandise/add', upload.array('image', 5), async function (req, res) {
 
-// router.post('/merchandise/add', upload.any(), async function (req, res) {
-//     let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description } = req.body;
+  const { id } = req.query;
+  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, status } = req.body;
 
-//     const files = req.files;
-//     const token = req.headers.authorization.split(' ')[1];
-//     let userdata = jwt.verify(token, JWT_KEY);
+  const imageUrl = req.files.map(file => file.filename);
 
-//     let newIdPrefix = "MRC";
-//     let keyword = `%${newIdPrefix}%`
-//     let similiarUID = await Merch.findAll({
-//         where: {
-//             id_merchandise: {
-//                 [Op.like]: keyword
-//             }
-//         }
-//     });
-//     const imagesObject = files.map(file => ({
-//         images: file.filename
-//      }));
-//    const valueImages = [];
-//    for (const obj of imagesObject) {
-//         const { images } = obj;
-//         valueImages.push(images);
-//     }
-//     console.log([valueImages]);
-//     let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
+  let newIdPrefix = "MRCH";
+  let keyword = `%${newIdPrefix}%`
+  let similiarUID = await Merch.findAll({
+        where: {
+            id_merchandise: {
+                [Op.like]: keyword
+            }
+        }
+  });
+  
+  let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
 
-//     console.log(valueImages.length);
-//    const newMerch = await Merch.create({
-//         id_merchandise: newIdMerchandise,
-//         id_artist: userdata.id_artist,
-//         name: name,
-//         artist: userdata.name,
-//         category: category,
-//         s: sizeS,
-//         m: sizeM,
-//         l: sizeL,
-//         xl: sizeXL,
-//         price:price,
-//         description:description,
-//         image:[valueImages],
-//         created_at: Date.now(),
-//         status: 1,
-//       });
+  await Merch.create({
+        id_merchandise: newIdMerchandise,
+        id_artist: id,
+        name: name,
+        artist: artist,
+        category: category,
+        s: sizeS,
+        m: sizeM,
+        l: sizeL,
+        xl: sizeXL,
+        price:price,
+        description: description,
+        status: status,
+        image: imageUrl.join(','),
+        created_at: Date.now(),
+        status: 1,
+      });
+  return res.status(201).send({ message: "merchandise berhasil ditambahkan" });
+});
 
-//     return res.status(201).send({message: "merchandise berhasil ditambahkan oleh " + userdata.name})
-// });
+router.get("/artist/merchandise", async function (req, res) {
+  const { id } = req.query;
+  const { limit } = req.query || 5;
+  try {
+   const data = await Merch.findAll({
+      where: {
+        id_artist:id,
+      },
+      limit: limit
+    });
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+
 module.exports = router;

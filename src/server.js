@@ -10,7 +10,7 @@ const shows = require("./routes/artist/shows");
 const login = require("./routes/login");
 const song = require("./routes/artist/song");
 const merch = require("./routes/artist/merchandise");
-const accountArtist = require('./routes/artist/account');
+const accountArtist = require("./routes/artist/account");
 
 const admin_merch = require("./routes/admin/merchandise");
 const admin_genre = require("./routes/admin/genre");
@@ -21,7 +21,7 @@ const admin_plan = require("./routes/admin/plan");
 const general_song = require("./routes/general/song");
 const general_album = require("./routes/general/album");
 const general_artist = require("./routes/general/artist");
-const general_merchandise = require('./routes/general/merchandise');
+const general_merchandise = require("./routes/general/merchandise");
 
 const Artist = require("./models/Artist");
 const Merch = require("./models/Merch");
@@ -33,6 +33,7 @@ const Genre = require("./models/Genre");
 const Fans = require("./models/Fans");
 const Plan = require("./models/Plan");
 const Subscription = require("./models/Subscription");
+
 
 Artist.associate({ Merch, Shows, Album, Song, Genre });
 Merch.associate({ Artist, Category });

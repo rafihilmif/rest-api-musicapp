@@ -32,9 +32,9 @@ router.get("/artist", async function (req, res) {
     const data = await Artist.findOne({
       where: {
         id_artist: {
-          [Op.like]: id
-        }
-      }
+          [Op.like]: id,
+        },
+      },
     });
     return res.status(200).json(data);
   } catch (error) {

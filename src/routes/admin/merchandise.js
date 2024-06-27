@@ -175,7 +175,8 @@ router.post(
       },
     });
 
-    let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    let newIdMerchandise =
+      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
     await Merch.create({
       id_merchandise: newIdMerchandise,
       id_artist: id_artist,

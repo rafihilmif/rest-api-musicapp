@@ -50,61 +50,60 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-router.post("/artist/shows/add", upload.single("image"), async function (req, res) {
-  const { id } = req.query;
-  let { name, date, location, contact, description, status } = req.body;
-  let { image } = req.file;
+router.post(
+  "/artist/shows/add",
+  upload.single("image"),
+  async function (req, res) {
+    const { id } = req.query;
+    let { name, date, location, contact, description, status } = req.body;
+    let { image } = req.file;
 
-  const filePath = req.file.filename;
+    const filePath = req.file.filename;
 
-  let newIdPrefix = "SWHS";
-  let keyword = `%${newIdPrefix}%`;
-  let similiarUID = await Shows.findAll({
-    where: {
-      id_show: {
-        [Op.like]: keyword,
+    let newIdPrefix = "SWHS";
+    let keyword = `%${newIdPrefix}%`;
+    let similiarUID = await Shows.findAll({
+      where: {
+        id_show: {
+          [Op.like]: keyword,
+        },
       },
-    },
-  });
-  let newIdShows =
-    newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-  await Shows.create({
-    id_show: newIdShows,
-    id_artist: id,
-    name: name,
-    duedate: date,
-    location: location,
-    contact: contact,
-    description: description,
-    image: filePath,
-    created_at: Date.now(),
-    status: status,
-  });
-  return res
-    .status(201)
-    .send({ message: 'shows berhasil ditambahkan'});
-});
+    });
+    let newIdShows =
+      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    await Shows.create({
+      id_show: newIdShows,
+      id_artist: id,
+      name: name,
+      duedate: date,
+      location: location,
+      contact: contact,
+      description: description,
+      image: filePath,
+      created_at: Date.now(),
+      status: status,
+    });
+    return res.status(201).send({ message: "shows berhasil ditambahkan" });
+  },
+);
 //SHOW ALL EVENT
-router.get("/shows", async function (req, res) {
+router.get("/artist/collection/shows", async function (req, res) {
+  const { id } = req.query;
   const { page, pageSize } = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;
 
-  const token = req.headers.authorization.split(" ")[1];
-  // let token = req.header('x-auth-token');
-  let userdata = jwt.verify(token, JWT_KEY);
-
   try {
     const { rows, count } = await Shows.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: {
         model: Artist,
         attributes: ["id_artist", "name"],
         where: {
           id_artist: {
-            [Op.like]: userdata.id_artist,
+            [Op.like]: id,
           },
         },
       },
@@ -116,6 +115,21 @@ router.get("/shows", async function (req, res) {
       data: rows,
       total: count,
     });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/shows", async function (req, res) {
+  const { id } = req.query;
+  const { limit } = req.query || 5;
+  try {
+    const data = await Shows.findAll({
+      where: {
+        id_artist: id,
+      },
+      limit: limit,
+    });
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(400).send("gagal memuat data");
   }

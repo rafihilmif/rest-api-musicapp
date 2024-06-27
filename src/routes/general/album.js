@@ -58,16 +58,15 @@ router.get("/collection/album", async function (req, res) {
   try {
     const data = await Album.findAll({
       where: {
-     
         id_artist: {
-          [Op.like]: id
-        }
+          [Op.like]: id,
+        },
       },
-         limit: 6,
+      limit: 6,
     });
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send('gagal memuat data album');
+    return res.status(400).send("gagal memuat data album");
   }
 });
 router.get("/album/song", async function (req, res) {

@@ -40,7 +40,7 @@ Shows.init(
     },
     description: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE(),

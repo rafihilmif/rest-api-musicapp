@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
     const fileName =
       file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname);
     cb(null, fileName);
-    },
+  },
 });
 
 const upload = multer({ storage: storage });
@@ -58,7 +58,7 @@ router.post(
     });
     let newIdAlbum =
       newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    
+
     await Album.create({
       id_album: newIdAlbum,
       id_artist: id,
@@ -70,7 +70,7 @@ router.post(
     });
     return res
       .status(201)
-      .send({ message: "album berhasil " + name + " ditambahkan"});
+      .send({ message: "album berhasil " + name + " ditambahkan" });
   },
 );
 
@@ -83,7 +83,7 @@ router.get("/artist/collection/album", async function (req, res) {
   try {
     const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist:id,
+        id_artist: id,
       },
       include: [
         {
@@ -110,12 +110,13 @@ router.get("/artist/collection/album", async function (req, res) {
 });
 router.get("/artist/album", async function (req, res) {
   const { id } = req.query;
-
+  const { limit } = req.query || 5;
   try {
     const data = await Album.findAll({
       where: {
-        id_artist:id,
-      }
+        id_artist: id,
+      },
+      limit: limit,
     });
     return res.status(200).json(data);
   } catch (err) {

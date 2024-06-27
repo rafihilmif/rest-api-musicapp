@@ -126,7 +126,6 @@ router.post("/auth/login", async function (req, res) {
   });
 
   if (existArtist.length > 0) {
-
     const passwordArtist = await Artist.findAll({
       where: {
         email: email,
