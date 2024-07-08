@@ -55,12 +55,11 @@ router.get("/collection/song", async function (req, res) {
   }
 });
 router.get("/genre", async function (req, res) {
-  const data = await Genre.findAll();
-  return res.status(200).json(data);
-  // try {
-
-  // } catch (error) {
-  //   return res.status(400).send("gagal memuat data");
-  // }
+  try {
+    const data = await Genre.findAll();
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("gagal memuat data");
+  }
 });
 module.exports = router;

@@ -6,6 +6,7 @@ class Merchandise extends Model {
   static associate(models) {
     this.belongsTo(models.Artist, { foreignKey: "id_artist" });
     this.belongsTo(models.Category, { foreignKey: "category" });
+    this.hasMany(models.ImageMerch, { foreignKey: 'id_merchandise' });
   }
 }
 Merchandise.init(
@@ -55,10 +56,7 @@ Merchandise.init(
       type: DataTypes.INTEGER(20),
       allowNull: false,
     },
-    image: {
-      type: DataTypes.BLOB("long"),
-      allowNull: false,
-    },
+
     created_at: {
       type: DataTypes.DATE(),
       allowNull: false,

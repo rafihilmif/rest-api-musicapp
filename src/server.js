@@ -22,6 +22,7 @@ const general_song = require("./routes/general/song");
 const general_album = require("./routes/general/album");
 const general_artist = require("./routes/general/artist");
 const general_merchandise = require("./routes/general/merchandise");
+const general_show = require("./routes/general/show");
 
 const Artist = require("./models/Artist");
 const Merch = require("./models/Merch");
@@ -33,10 +34,12 @@ const Genre = require("./models/Genre");
 const Fans = require("./models/Fans");
 const Plan = require("./models/Plan");
 const Subscription = require("./models/Subscription");
+const ImageMerch = require("./models/ImageMerch");
 
 
 Artist.associate({ Merch, Shows, Album, Song, Genre });
-Merch.associate({ Artist, Category });
+Merch.associate({ Artist, Category, ImageMerch });
+ImageMerch.associate({ Merch });
 Category.associate({ Merch });
 Shows.associate({ Artist });
 Album.associate({ Artist, Song });
@@ -75,6 +78,8 @@ app.use("/api", general_album);
 app.use("/api", general_song);
 app.use("/api", general_artist);
 app.use("/api", general_merchandise);
+app.use("/api", general_show);
+
 app.listen(app.get("port"), () => {
   console.log(`Server started at http://localhost:${app.get("port")}`);
 });
