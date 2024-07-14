@@ -1,9 +1,8 @@
-const { response } = require("express");
+
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
 const Artist = require("../../models/Artist");
-const { func } = require("joi");
 const Shows = require("../../models/Shows");
 
 const router = express.Router();
@@ -21,7 +20,7 @@ router.get('/detail/show', async function (req, res) {
     try {
         const data = await Shows.findOne({
             where: {
-                id_shows: {
+                id_show: {
                     [Op.like]: id
                 }
             }

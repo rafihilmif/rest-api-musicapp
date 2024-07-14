@@ -109,18 +109,94 @@ router.get("/artist/collection/album", async function (req, res) {
   }
 });
 router.get("/artist/album", async function (req, res) {
-  const { id } = req.query;
-  const { limit } = req.query || 5;
+  const { id, limit, name } = req.query;
+ 
+
+  const limitValue = parseInt(limit);
+ 
   try {
-    const data = await Album.findAll({
+    if (limitValue) {
+      const data = await Album.findAll({
       where: {
-        id_artist: id,
+        id_artist: id
       },
-      limit: limit,
+      limit: limitValue,
     });
     return res.status(200).json(data);
+    }
+    if (name) {
+      const data = await Album.findAll({
+        where: {
+          id_artist: id
+        },
+        name: {
+          [Op.notLike]: name
+        }
+      });
+      return res.status(200).json(data);
+    }
+    else {
+      const data = await Album.findAll({
+      where: {
+        id_artist: id,
+      }
+    });
+    return res.status(200).json(data);
+    }
   } catch (err) {
     return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/detail/album", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Album.findOne({
+      where: {
+        id_album: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("gagal memuat data album");
+  }
+});
+
+router.put("/artist/album/update", upload.single('image'), async function (req, res) {
+  const { id } = req.query;
+  const newData = req.body;
+
+  try {
+    const album = await Album.findByPk(id);
+
+    if (!album) {
+      return res.status(404).send('Data not found');
+    }
+
+    Object.keys(newData).forEach((key) => {
+      if (newData[key] !== undefined && key !== 'image') {
+        album[key] = newData[key];
+      }
+    });
+ 
+    if (req.file) {
+      const oldFilePath = "./public/assets/image/album/" + album.image;
+      fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+      album.image = req.file.filename;
+    }
+
+    await album.save();
+
+    return res.status(200).send('Data successfully updated');
+  } catch (error) {
+    console.error('Failed to update data:', error);
+    return res.status(400).send('Failed to update data');
   }
 });
 module.exports = router;

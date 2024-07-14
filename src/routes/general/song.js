@@ -54,12 +54,42 @@ router.get("/collection/song", async function (req, res) {
     return res.status(400).send("gagal memuat data lagu dari artist" + id);
   }
 });
+
 router.get("/genre", async function (req, res) {
+  const { name } = req.query; 
+  
   try {
-    const data = await Genre.findAll();
+    if (name) {
+      const data = await Genre.findAll({
+        where: {
+        name: {
+      [Op.notLike]: name
+      }
+      }});
+    return res.status(200).json(data);
+    }
+    else {
+      const data = await Category.findAll();
+    return res.status(200).json(data);
+    }
+  } catch (error) {
+    return res.status(400).json('gagal memuat data category');
+  }
+});
+
+router.get("/detail/song", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Song.findOne({
+      where: {
+        id_song: {
+          [Op.like]: id
+        }
+      }
+    });
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send('gagal memuat data track')
   }
 });
 module.exports = router;

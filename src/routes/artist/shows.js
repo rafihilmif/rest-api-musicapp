@@ -134,4 +134,40 @@ router.get("/artist/shows", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+router.put("/artist/show/update", upload.single('image'), async function (req, res) {
+  const { id } = req.query;
+  const newData = req.body;
+
+  try {
+    const show = await Shows.findByPk(id);
+
+    if (!show) {
+      return res.status(404).send('Data not found');
+    }
+
+    Object.keys(newData).forEach((key) => {
+      if (newData[key] !== undefined && key !== 'image') {
+        show[key] = newData[key];
+      }
+    });
+ 
+    if (req.file) {
+      const oldFilePath = "./public/assets/image/shows/" + show.image;
+      fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+      show.image = req.file.filename;
+    }
+
+    await show.save();
+
+    return res.status(200).send('Data successfully updated');
+  } catch (error) {
+    console.error('Failed to update data:', error);
+    return res.status(400).send('Failed to update data');
+  }
+});
 module.exports = router;

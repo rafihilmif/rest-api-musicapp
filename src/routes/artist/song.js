@@ -10,6 +10,7 @@ const path = require("path");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
 const Album = require("../../models/Album");
+const { func } = require("joi");
 
 const router = express.Router();
 
@@ -152,5 +153,70 @@ router.get("/artist/song", async function (req, res) {
   } catch (err) {
     return res.status(400).send("gagal memuat data");
   }
+});
+router.get('/artist/detail/song', async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    const data = await Song.findOne({
+      where: {
+        id_song: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data song');
+  }
+});
+router.put("/artist/song/update", upload.fields([
+    {
+      name: "image",
+      maxCount: 1,
+    },
+    {
+      name: "audio",
+      maxCount: 1,
+    },
+  ]), async function (req, res) {
+ const { id } = req.query;
+    const newData = req.body;
+    try {
+      const song = await Song.findByPk(id);
+      if (!song) {
+        return res.status(404).send("Data tidak ditemukan");
+      }
+      const saveNewUpdateData = {};
+      Object.keys(newData).forEach((key) => {
+        if (newData[key] !== undefined) {
+          saveNewUpdateData[key] = newData[key];
+        }
+      });
+
+      if (req.files["image"]) {
+        const oldFilePath = "./public/assets/image/song/" + song.image;
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting the old image:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+        saveNewUpdateData.image = req.files["image"][0].filename;
+      }
+      if (req.files["audio"]) {
+        const oldFilePath = "./public/assets/audio/" + song.audio;
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting the old audio:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+        saveNewUpdateData.audio = req.files["audio"][0].filename;
+      }
+      await song.update(saveNewUpdateData);
+    } catch (error) {
+      return res.status(400).send("Gagal merubah data");
+    }
 });
 module.exports = router;

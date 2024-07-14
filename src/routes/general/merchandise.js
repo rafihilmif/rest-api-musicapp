@@ -62,8 +62,6 @@ router.get("/category", async function (req, res) {
   } catch (error) {
     return res.status(400).json('gagal memuat data category');
   }
-  
-
 });
 router.get("/detail/merchandise", async function (req, res) {
   const { id } = req.query;
