@@ -76,7 +76,6 @@ router.get("/genre", async function (req, res) {
     return res.status(400).json('gagal memuat data category');
   }
 });
-
 router.get("/detail/song", async function (req, res) {
   const { id } = req.query;
   try {
@@ -92,4 +91,26 @@ router.get("/detail/song", async function (req, res) {
     return res.status(400).send('gagal memuat data track')
   }
 });
+router.get("/browse/genre", async function (req, res) {
+  const { name } = req.query;
+  try {
+    if (name) {
+      const data = await Genre.findAll({
+        where: {
+          name: {
+            [Op.like]: `%${name}%`
+          }
+        }
+      });
+      return res.status(200).json(data);
+    }
+    else {
+      const data = await Genre.findAll();
+      return res.status(200).json(data);
+    }
+  } catch (error) {
+    return res.status(400).send('gagal memuat data gnere');
+  }
+});
+
 module.exports = router;

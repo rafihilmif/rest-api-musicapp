@@ -10,5 +10,18 @@ router.get("/account/fans", async function (req, res) {
     dataAllFans,
   });
 });
-
+router.get("/detail/fans", async function (req, res) {
+  const { email } = req.query;
+  const data = await Fans.findOne({
+    where: {
+      email: {
+        [Op.like]: email,
+      },
+    },
+    attributes: {
+      exclude: ["password", "created_at", "status"],
+    },
+  });
+  return res.status(200).json(data);
+});
 module.exports = router;
