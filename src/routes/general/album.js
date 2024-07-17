@@ -1,6 +1,7 @@
 const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
+const { subMonths } = require('date-fns');
 
 const Album = require("../../models/Album");
 const Song = require("../../models/Song");
@@ -82,6 +83,88 @@ router.get("/album/song", async function (req, res) {
     return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/album/genre", async function (req, res) {
+  const { name } = req.query;
+  try {
+    const data = await Album.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            genre: {
+              [Op.like] : name
+            }
+          }
+        },
+        
+      ],
+    order: Sequelize.literal('RAND()'),
+    limit: 6
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data album berdasarkan genre');
+  }
+});
+
+router.get("/album/genre/old", async function (req, res) {
+  const { name } = req.query;
+  try {
+    const data = await Album.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name", "formed"],
+          where: {
+            genre: {
+              [Op.like] : name
+            },
+            formed: {
+              [Op.between]: [new Date('1990-01-01'), new Date('1999-12-31')]
+            }
+          }
+        },  
+      ],
+    limit: 6
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data album berdasarkan genre');
+  }
+});
+
+router.get("/album/genre/new", async function (req, res) {
+  const { name } = req.query;
+  const oneMonthAgo = subMonths(new Date(), 1);
+  try {
+    const data = await Album.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            genre: {
+              [Op.like] : name
+            }
+          }
+        },
+        
+      ],
+      limit: 6
+    }, {
+      where: {
+      created_at: {
+                [Op.gte]: oneMonthAgo
+            }
+      }
+    },
+    );
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat data album berdasarkan genre');
   }
 });
 
