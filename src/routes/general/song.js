@@ -69,7 +69,7 @@ router.get("/genre", async function (req, res) {
     return res.status(200).json(data);
     }
     else {
-      const data = await Category.findAll();
+      const data = await Genre.findAll();
     return res.status(200).json(data);
     }
   } catch (error) {
