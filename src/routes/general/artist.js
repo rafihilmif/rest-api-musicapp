@@ -41,4 +41,51 @@ router.get("/artist", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
+router.get("/result/top/artist", async function (req, res) {
+  const { name } = req.query;
+  try {
+    const data = await Artist.findOne({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal melakukan pencarian artist teratas');
+  }
+});
+
+router.get("/result/artist", async function (req, res) {
+  const { name } = req.query;
+  
+  try {
+   
+    const matchingArtist = await Artist.findOne({
+      where: {
+        name: {
+          [Op.like]: `%${name}%`
+        }
+      }
+    });
+ 
+    const otherArtists = await Artist.findAll({
+      where: {
+        name: {
+          [Op.notLike]: `%${name}%`
+        }
+      },
+      order: Sequelize.literal('RAND()'),
+      limit: 8
+    });
+    
+    const data = matchingArtist ? [matchingArtist, ...otherArtists] : otherArtists;
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for artist');
+  }
+});
+
 module.exports = router;

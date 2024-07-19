@@ -3,8 +3,9 @@ const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
 const Merch = require("../../models/Merch");
-const { func } = require("joi");
+const Artist = require("../../models/Artist");
 const Category = require("../../models/Category");
+const { func } = require("joi");
 
 const router = express.Router();
 
@@ -98,5 +99,46 @@ return res.json(data);
     return res.status(400).send("gagal memuat data related merchandise");
   }
   
+});
+router.get("/result/merchandise", async function (req, res) {
+  const { name } = req.query;
+  
+  try {
+    const matchingMerchs = await Merch.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            name: {
+              [Op.like]: `%${name}%`
+            }
+          }
+        }
+      ]
+    });
+
+    const randomMerchs = await Merch.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            name: {
+              [Op.notLike]: `%${name}%`
+            }
+          }
+        }
+      ],
+      order: Sequelize.literal('RAND()'), 
+      limit: 9 - matchingMerchs.length 
+    });
+
+    const data = [...matchingMerchs, ...randomMerchs];
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for merchandise');
+  }
 });
 module.exports = router;

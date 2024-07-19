@@ -112,5 +112,27 @@ router.get("/browse/genre", async function (req, res) {
     return res.status(400).send('gagal memuat data gnere');
   }
 });
+router.get("/result/top/song", async function (req, res) {
+  const { name } = req.query;
 
+  try {
+    const data = await Song.findAll(
+      {
+        include: [
+          {
+            model: Artist,
+            attributes: ["name"],
+            where: {
+              name: {
+                [Op.like]: `%${name}%`
+              }
+            }
+          },
+        ],
+      });  
+     return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal melakukan pencarian track teratas');
+  }
+});
 module.exports = router;

@@ -168,4 +168,46 @@ router.get("/album/genre/new", async function (req, res) {
   }
 });
 
+router.get("/result/album", async function (req, res) {
+  const { name } = req.query;
+  
+  try {
+ 
+    const matchingAlbums = await Album.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            name: {
+              [Op.like]: `%${name}%`
+            }
+          }
+        }
+      ]
+    });
+
+    const randomAlbums = await Album.findAll({
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            name: {
+              [Op.notLike]: `%${name}%`
+            }
+          }
+        }
+      ],
+      order: Sequelize.literal('RAND()'), 
+      limit: 9 - matchingAlbums.length 
+    });
+
+    const data = [...matchingAlbums, ...randomAlbums];
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for albums');
+  }
+});
 module.exports = router;
