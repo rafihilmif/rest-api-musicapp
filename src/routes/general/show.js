@@ -2,7 +2,6 @@
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
-const Artist = require("../../models/Artist");
 const Shows = require("../../models/Shows");
 
 const router = express.Router();
