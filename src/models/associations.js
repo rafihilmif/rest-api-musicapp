@@ -9,6 +9,7 @@ const Genre = require("./Genre");
 const Plan = require("./Plan");
 const Subscription = require("./Subscription");
 const ImageMerch = require("./ImageMerch");
+const CartItem = require("./CartItem");
 
 module.exports = function () {
   Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: "id_artist" });
@@ -25,6 +26,7 @@ module.exports = function () {
 
   Merch.belongsTo(Category, { foreignKey: "category" });
   Merch.hasMany(ImageMerch, { foreignKey: "id_merchandise" });
+  Merch.hasMany(CartItem, { foreignKey: "id_merchandise" });
 
   ImageMerch.belongsTo(Merch, { foreignKey: "id_merchandise" });
   
@@ -40,4 +42,5 @@ module.exports = function () {
   Subscription.belongsTo(Fans, { foreignKey: "id_fans" });
   Subscription.belongsTo(Fans, { foreignKey: "email_fans" });
 
+  CartItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
 };

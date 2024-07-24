@@ -6,7 +6,9 @@ class Merchandise extends Model {
   static associate(models) {
     this.belongsTo(models.Artist, { foreignKey: "id_artist" });
     this.belongsTo(models.Category, { foreignKey: "category" });
+
     this.hasMany(models.ImageMerch, { foreignKey: 'id_merchandise' });
+    this.hasMany(models.CartItem, { foreignKey: "id_merchandise" });
   }
 }
 Merchandise.init(

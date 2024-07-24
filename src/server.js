@@ -36,10 +36,11 @@ const Fans = require("./models/Fans");
 const Plan = require("./models/Plan");
 const Subscription = require("./models/Subscription");
 const ImageMerch = require("./models/ImageMerch");
+const CartItem = require("./models/CartItem");
 
 
 Artist.associate({ Merch, Shows, Album, Song, Genre });
-Merch.associate({ Artist, Category, ImageMerch });
+Merch.associate({ Artist, Category, ImageMerch, CartItem });
 ImageMerch.associate({ Merch });
 Category.associate({ Merch });
 Shows.associate({ Artist });
@@ -49,6 +50,7 @@ Genre.associate({ Artist, Song });
 Plan.associate({ Subscription });
 Fans.associate({ Subscription });
 Subscription.associate({ Plan, Fans });
+CartItem.associate({ Merch });
 
 const app = express();
 

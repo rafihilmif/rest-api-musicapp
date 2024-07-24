@@ -5,10 +5,49 @@ const Fans = require("../../models/Fans");
 const Merch = require("../../models/Merch");
 const Cart = require("../../models/Cart");
 const CartItem = require("../../models/CartItem");
+const ImageMerch = require("../../models/ImageMerch");
 const router = express.Router();
 
-router.get("/cart", async function (req, res) {
+router.get("/fans/cart", async function (req, res) {
+    const { id } = req.query;
 
+    const cart = await Cart.findOne({
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            }
+        });
+        if (!cart) {
+            return res.status(400).json({ message: "Tidak ada barang yang ditambahkan" });
+    }
+        const cartItems = await CartItem.findAll({
+            where: {
+                id_cart: {
+                    [Op.like]: cart.id_cart
+                }
+            },
+            include: [
+                {
+                    model: Merch,
+                    attributes: ['name', 'price'],
+
+                    include: [{
+                        model: ImageMerch,
+                        attributes: ['name'],
+                        where: {
+                            number: 1
+                        }
+                    }]
+                }
+            ]
+        });
+         res.status(200).json(cartItems);
+    try {   
+        
+    } catch (error) {
+        return res.status(400).send('gagal memuat data cart');
+    }
 });
 
 router.post("/fans/cart", async function (req, res) {
