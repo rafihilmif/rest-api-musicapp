@@ -58,7 +58,10 @@ Merchandise.init(
       type: DataTypes.INTEGER(20),
       allowNull: false,
     },
-
+    stock: {
+      type: DataTypes.INTEGER(20),
+      allowNull: false
+    },
     created_at: {
       type: DataTypes.DATE(),
       allowNull: false,

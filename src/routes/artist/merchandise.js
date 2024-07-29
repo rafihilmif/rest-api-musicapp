@@ -130,8 +130,7 @@ router.get('/artist/image/merchandise', async function (req, res) {
 router.post('/artist/merchandise/add', upload.array('image', 5), async function (req, res) {
 
   const { id } = req.query;
-  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, status } = req.body;
-
+  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
   const imageUrl = req.files.map((file, index) => ({
     filename: file.filename,
     number: index + 1,
@@ -159,6 +158,7 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
         m: sizeM,
         l: sizeL,
         xl: sizeXL,
+        stock: stock,
         price:price,
         description: description,
         status: status,
@@ -190,10 +190,26 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
 
     Object.keys(newData).forEach((key) => {
       if (newData[key] !== undefined && key !== 'image' && key !== 'number') {
-        merch[key] = newData[key];
-      
+        if (key === 'sizeS') {
+          merch.s = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeM') {
+          merch.m = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeL') {
+          merch.l = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeXL') {
+          merch.xl = parseInt(newData[key]) || 0;
+        }
+        else {
+           merch[key] = newData[key];
+        }
       }
     });
+
+    merch.stock = parseInt(merch.s) + parseInt(merch.m ) + parseInt(merch.l) + parseInt(merch.xl );
+
     await merch.save();
     
     if (req.files && req.files.length > 0) {
