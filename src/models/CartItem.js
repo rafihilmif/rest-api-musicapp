@@ -24,7 +24,7 @@ CartItem.init(
         },
      size: {
       type: DataTypes.STRING(10),
-      allowNull: false,
+      allowNull: true,
         },
      qty: {
       type: DataTypes.INTEGER(11),

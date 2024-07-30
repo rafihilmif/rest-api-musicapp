@@ -21,7 +21,7 @@ router.get("/fans/cart", async function (req, res) {
         if (!cart) {
             return res.status(400).json({ message: "Tidak ada barang yang ditambahkan" });
     }
-        const cartItems = await CartItem.findAll({
+    const cartItems = await CartItem.findAll({
             where: {
                 id_cart: {
                     [Op.like]: cart.id_cart
@@ -41,8 +41,17 @@ router.get("/fans/cart", async function (req, res) {
                     }]
                 }
             ]
-        });
-         res.status(200).json(cartItems);
+    }); 
+    
+    const totalCartItems = await CartItem.count({
+            distinct: true,
+            col: 'id_merchandise',
+            where: {
+                id_cart: cart.id_cart
+            }
+    });
+    
+    res.status(200).json({data: cartItems, total: totalCartItems});
     try {   
         
     } catch (error) {
@@ -115,5 +124,21 @@ router.post("/fans/cart", async function (req, res) {
     } catch (error) {
         res.status(400).send('gagal menambahkan cart') ;
     }
+});
+router.put('/fans/cart', async function (req, res) {
+    const { id} = req.query;
+    const { qty } = req.body;
+
+    let cartItem = await CartItem.findOne({
+        where: {
+            id_cart_item: id,
+         }
+      });
+      
+    if (cartItem) {
+        cartItem.qty = qty;
+        await cartItem.save();
+     }
+    
 });
 module.exports = router;
