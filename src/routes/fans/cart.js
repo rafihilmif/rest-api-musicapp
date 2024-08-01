@@ -45,7 +45,7 @@ router.get("/fans/cart", async function (req, res) {
     
     const totalCartItems = await CartItem.count({
             distinct: true,
-            col: 'id_merchandise',
+            col: 'id_cart_item',
             where: {
                 id_cart: cart.id_cart
             }
@@ -87,8 +87,9 @@ router.post("/fans/cart", async function (req, res) {
     }
     const merch = await Merch.findByPk(id_merchandise);
     if (!merch) {
-        return res.status(404).json({ message: 'merch not found' });
+        return res.status(404).json({ message: 'produk tidak ditemukan' });
     }
+
     let cartItem = await CartItem.findOne({
         where: {
             id_cart: cart.id_cart,
@@ -96,7 +97,26 @@ router.post("/fans/cart", async function (req, res) {
             size: size || null
          }
     });
-        
+    let availableStock;
+        switch(size) {
+            case 'S':
+                availableStock = merch.s;
+                break;
+            case 'M':
+                availableStock = merch.m;
+                break;
+            case 'L':
+                availableStock = merch.l;
+                break;
+            case 'XL':
+                availableStock = merch.xl;
+                break;
+            default:
+                return res.status(400).json({ message: 'ukuran tidak valid' });
+        }
+        if (availableStock < qty) {
+            return res.status(400).json({ message: 'stock tidak mencukupi' });
+        }
      if (cartItem) {
         cartItem.qty += qty;
         await cartItem.save();
@@ -133,8 +153,37 @@ router.put('/fans/cart', async function (req, res) {
         where: {
             id_cart_item: id,
          }
-      });
-      
+    });
+
+    let merch = await Merch.findOne({
+        where: {
+            id_merchandise: {
+                [Op.like] : cartItem.id_merchandise         
+            }
+        }
+    });
+
+    const size = cartItem.size;
+    let availableStock = 0;
+        switch (size) {
+            case 'S':
+                availableStock = merch.s;
+                break;
+            case 'M':
+                availableStock = merch.m;
+                break;
+            case 'L':
+                availableStock = merch.l;
+                break;
+            case 'XL':
+                availableStock = merch.xl;
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid size' });
+        }
+    if (availableStock < qty) {
+            return res.status(400).json({ message: 'Not enough stock available ' + size });
+    }
     if (cartItem) {
         cartItem.qty = qty;
         await cartItem.save();
