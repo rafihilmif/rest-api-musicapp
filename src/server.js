@@ -12,6 +12,7 @@ const song = require("./routes/artist/song");
 const merch = require("./routes/artist/merchandise");
 const accountArtist = require("./routes/artist/account");
 const cart = require("./routes/fans/cart");
+const order = require("./routes/fans/order");
 
 const admin_merch = require("./routes/admin/merchandise");
 const admin_genre = require("./routes/admin/genre");
@@ -37,9 +38,11 @@ const Plan = require("./models/Plan");
 const Subscription = require("./models/Subscription");
 const ImageMerch = require("./models/ImageMerch");
 const CartItem = require("./models/CartItem");
+const Order = require("./models/Order");
 
 
 Artist.associate({ Merch, Shows, Album, Song, Genre });
+Fans.associate({ Subscription, Order });
 Merch.associate({ Artist, Category, ImageMerch, CartItem });
 ImageMerch.associate({ Merch });
 Category.associate({ Merch });
@@ -48,9 +51,9 @@ Album.associate({ Artist, Song });
 Song.associate({ Artist, Album, Genre });
 Genre.associate({ Artist, Song });
 Plan.associate({ Subscription });
-Fans.associate({ Subscription });
 Subscription.associate({ Plan, Fans });
 CartItem.associate({ Merch });
+Order.associate({ Fans });
 
 const app = express();
 
@@ -71,6 +74,7 @@ app.use("/api", song);
 app.use("/api", merch);
 app.use("/api", accountArtist);
 app.use("/api", cart);
+app.use("/api", order);
 
 app.use("/api", admin_merch);
 app.use("/api", admin_genre);

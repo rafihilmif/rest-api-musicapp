@@ -10,6 +10,7 @@ const Plan = require("./Plan");
 const Subscription = require("./Subscription");
 const ImageMerch = require("./ImageMerch");
 const CartItem = require("./CartItem");
+const Order = require("./Order");
 
 module.exports = function () {
   Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: "id_artist" });
@@ -37,10 +38,13 @@ module.exports = function () {
 
   Fans.hasOne(Subscription, { foreignKey: "id_fans" });
   Fans.hasOne(Subscription, { foreignKey: "email" });
+  Fans.hasMany(Order, { foreignKey: "id_fans" });
 
   Subscription.belongsTo(Plan, { foreignKey: "plan_name" });
   Subscription.belongsTo(Fans, { foreignKey: "id_fans" });
   Subscription.belongsTo(Fans, { foreignKey: "email_fans" });
 
   CartItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
+  Order.belongsTo(Fans, { foreignKey: "id_fans" });
+  
 };

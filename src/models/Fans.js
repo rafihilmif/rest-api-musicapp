@@ -6,6 +6,8 @@ class Fans extends Model {
   static associate(models) {
     this.hasOne(models.Subscription, { foreignKey: "id_fans" });
     this.hasOne(models.Subscription, { foreignKey: "email" });
+    
+    this.hasMany(models.Order, { foreignKey: "id_fans" });
   }
 }
 Fans.init(

@@ -2,12 +2,13 @@ const { getDB } = require("../config/env");
 const sequelize = getDB();
 const { Model, DataTypes } = require("sequelize");
 
-class Orders extends Model {
+class Order extends Model {
   static associate(models) {
-    // this.hasMany(models.Merch, { foreignKey: "name" });
+    this.belongsTo(models.Fans, { foreignKey: "id_fans" });
+    
   }
 }
-Orders.init(
+Order.init(
   {
     id_order: {
       type: DataTypes.STRING(255),

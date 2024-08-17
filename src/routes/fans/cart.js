@@ -50,8 +50,14 @@ router.get("/fans/cart", async function (req, res) {
                 id_cart: cart.id_cart
             }
     });
-    
-    res.status(200).json({data: cartItems, total: totalCartItems});
+
+     const totalQtyItems = await CartItem.sum('qty', {
+            where: {
+                id_cart: cart.id_cart
+            }
+     });
+
+    res.status(200).json({data: cartItems, totalItems: totalCartItems, totalQty: totalQtyItems});
     try {   
         
     } catch (error) {

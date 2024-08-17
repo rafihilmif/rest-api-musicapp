@@ -1,14 +1,15 @@
 const Sequelize = require("sequelize");
+require("dotenv").config();
 const db = new Sequelize(
-  "musicapp", // DB_NAME
-  "root", // DB_USER
-  "", // DB_PASSWORD
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
   {
-    host: "127.0.0.1",
-    port: 3306,
-    dialect: "mysql",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: process.env.DB_DIALECT,
     logging: console.log,
-    timezone: "+07:00",
+    timezone: process.env.DB_TIMEZONE,
   },
 );
 
