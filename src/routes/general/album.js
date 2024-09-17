@@ -172,7 +172,6 @@ router.get("/result/album", async function (req, res) {
   const { name } = req.query;
   
   try {
- 
     const matchingAlbums = await Album.findAll({
       include: [
         {
@@ -184,7 +183,7 @@ router.get("/result/album", async function (req, res) {
             }
           }
         }
-      ]
+      ],
     });
 
     const randomAlbums = await Album.findAll({
@@ -200,7 +199,7 @@ router.get("/result/album", async function (req, res) {
         }
       ],
       order: Sequelize.literal('RAND()'), 
-      limit: 9 - matchingAlbums.length 
+      limit: 6 - matchingAlbums.length 
     });
 
     const data = [...matchingAlbums, ...randomAlbums];

@@ -198,7 +198,7 @@ router.get("/artist/collection/song", async function (req, res) {
       ],
       limit,
       offset,
-      order: [[Sequelize.literal("name"), "ASC"]],
+      order: [[Sequelize.literal("release_date"), "desc"]],
     });
     return res.status(200).json({
       data: rows,

@@ -11,6 +11,8 @@ const Subscription = require("./Subscription");
 const ImageMerch = require("./ImageMerch");
 const CartItem = require("./CartItem");
 const Order = require("./Order");
+const Playlist = require("./Playlist");
+const PlaylistSong = require("./PlaylistSong");
 
 module.exports = function () {
   Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: "id_artist" });
@@ -22,8 +24,9 @@ module.exports = function () {
   Merch.belongsTo(Artist, { foreignKey: "id_artist" });
   Shows.belongsTo(Artist, { foreignKey: "id_artist" });
   Song.belongsTo(Artist, { foreignKey: "id_artist" });
+  Song.belongsTo(Artist, { foreignKey: "id_artist" });
 
-  Song.belongsTo(Album, { foreignKey: "id_album" });
+ 
 
   Merch.belongsTo(Category, { foreignKey: "category" });
   Merch.hasMany(ImageMerch, { foreignKey: "id_merchandise" });
@@ -47,4 +50,8 @@ module.exports = function () {
   CartItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
   Order.belongsTo(Fans, { foreignKey: "id_fans" });
   
+  Playlist.hasOne(PlaylistSong, {foreignKey: "id_playlist"})
+  PlaylistSong.belongsTo(Playlist, { foreignKey: "id_playlist" });
+  Song.hasMany(PlaylistSong, { foreignKey: "id_song" });
+  PlaylistSong.belongsTo(Song, {foreignKey:"id_song"})
 };

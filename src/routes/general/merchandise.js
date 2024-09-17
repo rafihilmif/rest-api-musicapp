@@ -131,7 +131,7 @@ router.get("/result/merchandise", async function (req, res) {
         }
       ],
       order: Sequelize.literal('RAND()'), 
-      limit: 9 - matchingMerchs.length 
+      limit: 6 - matchingMerchs.length 
     });
 
     const data = [...matchingMerchs, ...randomMerchs];

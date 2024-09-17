@@ -129,7 +129,8 @@ router.get("/result/top/song", async function (req, res) {
             }
           },
         ],
-      });  
+      limit: 4
+      },);  
      return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send('gagal melakukan pencarian track teratas');

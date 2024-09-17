@@ -11,33 +11,32 @@ const ImageMerch = require("../../models/ImageMerch");
 
 const router = express.Router();
 
-
-router.post('/shipping/cost', async function (req, res) { 
+router.post('/fans/shipping/cost', async function (req, res) { 
     const { origin, destination, weight, courier } = req.body;
-    
-     const response = await axios.post(
-            `https://api.rajaongkir.com/starter/cost`,
-            {
-                origin: origin,
-                destination: destination, 
-                weight: weight,
-                courier : courier
-            },
-            {
-                headers: {
-                    key: process.env.RAJAONGKIR_API_KEY,
-                    'content-type': 'application/x-www-form-urlencoded',
-                },
-            }
-        );
-        const data = response.data.rajaongkir.results[0]
-        res.status(200).json(data);
-        
+    console.log(destination);
     try {
-       
+        const response = await axios.post(
+            `https://api.rajaongkir.com/starter/cost`,
+            { origin, destination, weight, courier },
+            { headers: { key: process.env.RAJAONGKIR_API_KEY } }
+        );
+
+        console.log('API response:', JSON.stringify(response.data, null, 2));
+
+        if (response.data && response.data.rajaongkir && response.data.rajaongkir.results) {
+            const costs = response.data.rajaongkir.results[0].costs;
+            
+            if (costs && costs.length > 0) {
+                res.status(200).json(costs);
+            } else {
+                res.status(204).json({ message: 'No shipping costs available' });
+            }
+        } else {
+            throw new Error('Unexpected API response structure');
+        }
     } catch (error) {
-        console.error('Error fetching shipping cost:', error);
-        res.status(500).json({ error: 'An error occurred while fetching shipping cost' });
+        console.error('Error:', error.message);
+        res.status(500).json({ error: 'An error occurred while fetching shipping costs' });
     }
 });
 router.get('/shipping/province', async function (req, res) {
@@ -78,4 +77,5 @@ router.get('/shipping/city', async function (req, res) {
         res.status(500).json({ error: 'An error occurred while fetching shipping cost' });
     }
 });
+
 module.exports = router;

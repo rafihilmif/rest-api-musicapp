@@ -49,7 +49,7 @@ router.get("/result/show", async function (req, res) {
         }
       },
       order: Sequelize.literal('RAND()'),
-      limit: 8
+      limit: 5
     });
     
     const data = matchingShows ? [matchingShows, ...otherShows] : otherShows;
