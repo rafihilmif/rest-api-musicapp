@@ -13,6 +13,7 @@ const merch = require("./routes/artist/merchandise");
 const accountArtist = require("./routes/artist/account");
 const cart = require("./routes/fans/cart");
 const order = require("./routes/fans/order");
+const follow = require("./routes/fans/follow");
 
 const admin_merch = require("./routes/admin/merchandise");
 const admin_genre = require("./routes/admin/genre");
@@ -26,6 +27,7 @@ const general_artist = require("./routes/general/artist");
 const general_merchandise = require("./routes/general/merchandise");
 const general_show = require("./routes/general/show");
 const general_playlist = require("./routes/general/playlist");
+const general_reported = require("./routes/general/reported");
 
 const Artist = require("./models/Artist");
 const Merch = require("./models/Merch");
@@ -42,9 +44,11 @@ const CartItem = require("./models/CartItem");
 const Order = require("./models/Order");
 const Playlist = require("./models/Playlist");
 const PlaylistSong = require("./models/PlaylistSong");
+const Reported = require('./models/Reported');
+const Follow = require('./models/Follow');
 
-Artist.associate({ Merch, Shows, Album, Song, Genre });
-Fans.associate({ Subscription, Order });
+Artist.associate({ Merch, Shows, Album, Song, Genre, Follow, Reported });
+Fans.associate({ Subscription, Order, Follow });
 Merch.associate({ Artist, Category, ImageMerch, CartItem });
 ImageMerch.associate({ Merch });
 Category.associate({ Merch });
@@ -58,7 +62,8 @@ CartItem.associate({ Merch });
 Order.associate({ Fans });
 Playlist.associate({ PlaylistSong });
 PlaylistSong.associate({ Playlist, Song });
-
+Reported.associate({Artist})
+Follow.associate({ Artist, Fans });
 const app = express();
 
 app.set("port", 3030);
@@ -79,7 +84,7 @@ app.use("/api", merch);
 app.use("/api", accountArtist);
 app.use("/api", cart);
 app.use("/api", order);
-
+app.use("/api", follow);
 app.use("/api", admin_merch);
 app.use("/api", admin_genre);
 app.use("/api", admin_account);
@@ -92,6 +97,7 @@ app.use("/api", general_artist);
 app.use("/api", general_merchandise);
 app.use("/api", general_show);
 app.use("/api", general_playlist);
+app.use("/api", general_reported);
 
 app.listen(app.get("port"), () => {
   console.log(`Server started at http://localhost:${app.get("port")}`);

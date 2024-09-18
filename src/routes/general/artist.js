@@ -27,18 +27,28 @@ router.get("/artists", async function (req, res) {
 });
 
 router.get("/artist", async function (req, res) {
-  const { id } = req.query;
+  const { id, username } = req.query;
   try {
+    const whereClause = {};
+    if (id) {
+      whereClause.id_artist = {
+        [Op.like]: id,
+      };
+    }
+    if (username) {
+      whereClause.username = {
+        [Op.like]: username,
+      };
+    }
     const data = await Artist.findOne({
-      where: {
-        id_artist: {
-          [Op.like]: id,
-        },
-      },
+      where: whereClause,
     });
+    if (!data) {
+      return res.status(404).send("Artist not found");
+    }
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send("Failed to load data");
   }
 });
 

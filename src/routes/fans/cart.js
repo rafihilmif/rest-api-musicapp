@@ -194,6 +194,19 @@ router.put('/fans/cart', async function (req, res) {
         cartItem.qty = qty;
         await cartItem.save();
      }
-    
+});
+router.delete("/fans/cart/item", async function (req, res) {
+    const {id} = req.query;
+
+    try {
+        await CartItem.destroy({
+            where: {
+                id_cart_item: id
+            }
+        });
+        return res.status(200).json("Item has been remove from cart")
+    } catch (error) {
+        res.status(400).send("Failed to remove cart item");
+    }
 });
 module.exports = router;
