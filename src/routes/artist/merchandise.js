@@ -52,19 +52,226 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ 
   storage: storage,
-  // Limit to 5 files
   limits: { files: 5 }
 });
 router.get("/artist/collection/merchandise", async function (req, res) {
-  const { id } = req.query;
-  const { page, pageSize } = req.query;
-  const limit = pageSize || 15;
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
     const { rows, count } = await Merch.findAndCountAll({
       where: {
         id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/tshirt", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: 'T-shirt'
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/longsleeve", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: 'Long Sleeve'
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/zipper", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: 'Zipper Hoodie'
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/hoodie", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: 'Hoodie'
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/sweatshirt", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: 'Sweatshirt'
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/merchandise/sort/accessories", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Merch.findAndCountAll({
+      where: {
+        id_artist: id,
+        category: {
+      [Op.and]: [{ [Op.notLike]: "%T-Shirt%" },{ [Op.notLike]: "%Long Sleeve%" },{ [Op.notLike]: "%Zipper Hoodie%" },
+    { [Op.notLike]: "%Hoodie%" },
+    { [Op.notLike]: "%Sweatshirt%" }
+  ]
+}
       },
       include: [
         {

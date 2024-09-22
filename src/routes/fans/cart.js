@@ -103,25 +103,32 @@ router.post("/fans/cart", async function (req, res) {
             size: size || null
          }
     });
-    let availableStock;
-        switch(size) {
-            case 'S':
-                availableStock = merch.s;
-                break;
-            case 'M':
-                availableStock = merch.m;
-                break;
-            case 'L':
-                availableStock = merch.l;
-                break;
-            case 'XL':
-                availableStock = merch.xl;
-                break;
-            default:
-                return res.status(400).json({ message: 'ukuran tidak valid' });
-        }
-        if (availableStock < qty) {
-            return res.status(400).json({ message: 'stock tidak mencukupi' });
+    let isGarment = ['S', 'M', 'L', 'XL'].includes(size);
+        if (isGarment) {
+            let availableStock;
+            switch(size) {
+                case 'S':
+                    availableStock = merch.s;
+                    break;
+                case 'M':
+                    availableStock = merch.m;
+                    break;
+                case 'L':
+                    availableStock = merch.l;
+                    break;
+                case 'XL':
+                    availableStock = merch.xl;
+                    break;
+                default:
+                    return res.status(400).json({ message: 'Ukuran tidak valid' });
+            }
+            if (availableStock < qty) {
+                return res.status(400).json({ message: 'Stock tidak mencukupi' });
+            }
+        } else {
+            if (merch.stock < qty) {
+                return res.status(400).json({ message: 'Stock tidak mencukupi' });
+            }
         }
      if (cartItem) {
         cartItem.qty += qty;

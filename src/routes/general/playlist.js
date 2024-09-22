@@ -13,7 +13,7 @@ const fs = require("fs");
 const Artist = require("../../models/Artist");
 const Fans = require("../../models/Fans");
 const Song = require("../../models/Song");
-
+const LikeSong = require('../../models/LikeSong');
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -287,6 +287,24 @@ router.delete('/user/playlist/song', async function (req, res) {
     res.status(500).json({ message: 'An error occurred while removing the song from the playlist' });
   }
 });
+router.get('/collection/playlist', async function (req, res) {
+  const { id } = req.query;
+    try {
+        const data = await Playlist.findAll({
+            where: {
+                id_user: {
+                    [Op.like]: id
+                }
+            },
+            limit: 10
+        });
+    
+        return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for merchandise');
+    }
+});
+
 router.delete('/user/playlist', async function (req, res) {
   const { id } = req.query;
 
@@ -314,7 +332,6 @@ router.delete('/user/playlist', async function (req, res) {
     const playlist = await Playlist.findOne({
       where: { id_playlist: id }
     });
-    console.log(playlist);
     if (playlist) {
       
      const oldFilePath = "./public/assets/image/playlist/" + playlist.image;
@@ -341,5 +358,149 @@ router.delete('/user/playlist', async function (req, res) {
     res.status(500).json({ message: 'An error occurred while removing the playlist' });
   }
 });
+router.post('/user/add/like/song', async function (req, res) {
+  const { idUser, idSong } = req.query;
 
+  let newIdPrefix = "LIKESNG";
+
+  try {
+    let highestIdEntry = await LikeSong.findOne({
+      where: {
+        id_like_song: {
+          [Op.like]: `${newIdPrefix}%`
+        }
+      },
+      order: [[ 'id_like_song', 'DESC' ]] 
+    });
+    let newIdNumber = 1;
+    if (highestIdEntry) {
+      let highestId = highestIdEntry.id_like_song;
+      let numericPart = highestId.replace(newIdPrefix, ''); 
+      newIdNumber = parseInt(numericPart, 10) + 1;
+    }
+    let newIdLikeSong = newIdPrefix + newIdNumber.toString().padStart(3, '0');
+    await LikeSong.create({
+      id_like_song: newIdLikeSong,
+      id_user: idUser,
+      id_song: idSong,
+      created_at: Date.now(),
+      status: 1,
+    });
+
+    return res.status(200).json({ message: 'Song added to like successfully' });
+  } catch (error) {
+    console.error('Error adding song to like:', error);
+    return res.status(500).json({ message: 'Error adding song to like' });
+  }
+});
+router.get('/user/like/song', async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await LikeSong.findAll({
+      where: {
+        id_user: {
+          [Op.like]: id
+        }
+      },
+      include: [
+        {
+          model: Song,
+          attributes: ['id_song', 'name', 'image'],
+          include: [
+            {
+              model: Artist,
+              attributes: ['name'], 
+            }
+          ]
+        },
+      ],
+          order: [[Sequelize.literal(`id_like_song`), "ASC"]],
+    });
+   const totalSongs = data.length;
+    return res.status(200).json({
+      totalSongs,
+      songs: data
+    });
+  } catch (error) {
+    console.error('fetch data like song', error);
+  }
+});
+router.delete('/user/like/song', async function (req, res) {
+  const { id } = req.query;
+  try {
+    const deletedSong = await LikeSong.destroy({
+      where: {
+        id_song: id
+      }
+    });
+
+    if (deletedSong) {
+      res.status(200).json({ message: 'Song removed from favorite successfully' });
+    } else {
+      res.status(404).json({ message: 'Song not found in the favorite' });
+    }
+  } catch (error) {
+    console.error('Error deleting song:', error);
+    res.status(500).json({ message: 'An error occurred while removing the song from the favorite' });
+  }
+});
+router.get('/search/song/like', async function (req, res) {
+  const { q} = req.query;
+
+  if (!q) {
+    return res.status(400).send('Query parameter is missing');
+  }
+  try {
+    const data = await Song.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${q}%` 
+        },
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ['name']
+        }
+      ],
+      limit: 10
+    });
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error('Search error:', error);  
+    return res.status(500).send('Failed to search tracks');
+  }
+});
+router.get("/result/playlist", async function (req, res) {
+  const { name } = req.query;
+  
+  try {
+    const matchingPlaylist = await Playlist.findAll({
+     where: {
+            name: {
+              [Op.like]: `%${name}%`
+            }
+       },
+      order: Sequelize.literal('RAND()'), 
+      limit: 3
+    });
+
+    const randomPlaylist = await Playlist.findAll({
+     where: {
+            name: {
+              [Op.notLike]: `%${name}%`
+            }
+       },
+      order: Sequelize.literal('RAND()'), 
+      limit: 3 
+    });
+
+    const data = [...matchingPlaylist, ...randomPlaylist];
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for playlist');
+  }
+});
 module.exports = router;

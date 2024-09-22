@@ -2,14 +2,14 @@ const { getDB } = require("../config/env");
 const sequelize = getDB();
 const { Model, DataTypes } = require("sequelize");
 
-class Plan extends Model {
+class PlanPayment extends Model {
   static associate(models) {
-    this.belongsTo(models.Fans, { foreignKey: "id_plan" });
+    this.belongsTo(models.Fans, { foreignKey: "id_fans" });
   }
 }
-Plan.init(
+PlanPayment.init(
   {
-    id_plan: {
+    id_plan_payment: {
       type: DataTypes.STRING(255),
       primaryKey: true,
       allowNull: false,
@@ -18,33 +18,21 @@ Plan.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    start: {
-      type: DataTypes.DATE(),
+    status: {
+      type: DataTypes.STRING(20),
       allowNull: true,
-    },
-    expired: {
-      type: DataTypes.DATE(),
-      allowNull: false,
-    },
-    limit_listening: {
-      type: DataTypes.INTEGER(2),
-      allowNull: false,
     },
     created_at: {
       type: DataTypes.DATE(),
-      allowNull: false,
-    },
-     status: {
-      type: DataTypes.INTEGER(2),
       allowNull: false,
     },
   },
   {
     sequelize,
     timestamps: false,
-    modelName: "Plan",
-    tableName: "plan",
+    modelName: "PlanPayment",
+    tableName: "plan_payment",
   },
 );
 
-module.exports = Plan;
+module.exports = PlanPayment;

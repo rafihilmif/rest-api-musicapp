@@ -75,13 +75,12 @@ router.post(
 );
 
 router.get("/artist/collection/album", async function (req, res) {
-  const { id } = req.query;
-  const { page, pageSize } = req.query;
+  const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
-    const { rows, count } = await Album.findAndCountAll({
+   const { rows, count } = await Album.findAndCountAll({
       where: {
         id_artist: id,
       },
@@ -108,11 +107,74 @@ router.get("/artist/collection/album", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+router.get('/artist/collection/album/sort/new', async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
 
+   try {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`created_at`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get('/artist/collection/album/sort/old', async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`created_at`), "DESC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
 router.get("/artist/album", async function (req, res) {
   const { id, limit, name } = req.query;
- 
-
   const limitValue = parseInt(limit);
  
   try {
@@ -202,4 +264,5 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
     return res.status(400).send('Failed to update data');
   }
 });
+
 module.exports = router;

@@ -27,21 +27,13 @@ router.get("/artists", async function (req, res) {
 });
 
 router.get("/artist", async function (req, res) {
-  const { id, username } = req.query;
+  const { id} = req.query;
   try {
-    const whereClause = {};
-    if (id) {
-      whereClause.id_artist = {
-        [Op.like]: id,
-      };
-    }
-    if (username) {
-      whereClause.username = {
-        [Op.like]: username,
-      };
-    }
+   
     const data = await Artist.findOne({
-      where: whereClause,
+      where: {
+        id_artist: id
+      }
     });
     if (!data) {
       return res.status(404).send("Artist not found");

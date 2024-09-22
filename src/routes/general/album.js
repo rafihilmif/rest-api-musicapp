@@ -55,19 +55,180 @@ router.get("/album", async function (req, res) {
   }
 });
 router.get("/collection/album", async function (req, res) {
-  const { id } = req.query;
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
   try {
-    const data = await Album.findAll({
+    if (!page && !pageSize) {
+      const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: {
-          [Op.like]: id,
-        },
+        id_artist: id,
       },
-      limit: 6,
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit : 6,
+      order: [[Sequelize.literal(`name`), "ASC"]],
     });
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(400).send("gagal memuat data album");
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+    else {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/collection/album/sort/new", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    if (!page && !pageSize) {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit : 6,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+    else {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`created_at`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/collection/album/sort/old", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    if (!page && !pageSize) {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit : 6,
+      order: [[Sequelize.literal(`name`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+    else {
+      const { rows, count } = await Album.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal(`created_at`), "DESC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
   }
 });
 router.get("/album/song", async function (req, res) {
@@ -184,6 +345,8 @@ router.get("/result/album", async function (req, res) {
           }
         }
       ],
+      order: Sequelize.literal('RAND()'), 
+      limit: 3
     });
 
     const randomAlbums = await Album.findAll({
@@ -199,14 +362,14 @@ router.get("/result/album", async function (req, res) {
         }
       ],
       order: Sequelize.literal('RAND()'), 
-      limit: 6 - matchingAlbums.length 
+      limit : 3
     });
 
     const data = [...matchingAlbums, ...randomAlbums];
     
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send('Failed to search for albums');
+    return res.status(400).send(error);
   }
 });
 module.exports = router;

@@ -34,27 +34,132 @@ router.get("/songs", async function (req, res) {
   }
 });
 router.get("/collection/song", async function (req, res) {
-  const { id } = req.query;
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
   try {
-    const data = await Song.findAll({
+
+    if (!page && !pageSize) {
+      const { rows, count } = await Song.findAndCountAll({
       where: {
-        id_artist: {
-          [Op.like]: id,
-        },
+        id_artist: id,
       },
       include: [
         {
           model: Artist,
-          attributes: ["name"],
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
         },
       ],
+      limit : 6,
+      order: [[Sequelize.literal("name"), "ASC"]],
     });
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(400).send("gagal memuat data lagu dari artist" + id);
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+    else {
+      const { rows, count } = await Song.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal("name"), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+    }
+    
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
   }
 });
+router.get("/collection/song/sort/new", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
 
+  try {
+    const { rows, count } = await Song.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal("release_date"), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/collection/song/sort/old", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Song.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal("release_date"), "DESC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
 router.get("/genre", async function (req, res) {
   const { name } = req.query; 
   

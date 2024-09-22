@@ -173,11 +173,11 @@ router.post(
     }
   }
 );
-//SHOW ALL SONG
+
 router.get("/artist/collection/song", async function (req, res) {
   const { id } = req.query;
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
@@ -198,7 +198,73 @@ router.get("/artist/collection/song", async function (req, res) {
       ],
       limit,
       offset,
-      order: [[Sequelize.literal("release_date"), "desc"]],
+      order: [[Sequelize.literal("name"), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/song/sort/new", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Song.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal("release_date"), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/artist/collection/song/sort/old", async function (req, res) {
+  const { id, page, pageSize  } = req.query;
+  const limit = pageSize || 18;
+  const offset = (page - 1) * limit || 0;
+
+  try {
+    const { rows, count } = await Song.findAndCountAll({
+      where: {
+        id_artist: id,
+      },
+      include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"],
+          where: {
+            id_artist: {
+              [Op.like]: id,
+            },
+          },
+        },
+      ],
+      limit,
+      offset,
+      order: [[Sequelize.literal("release_date"), "DESC"]],
     });
     return res.status(200).json({
       data: rows,

@@ -4,11 +4,10 @@ const { Model, DataTypes } = require("sequelize");
 
 class Fans extends Model {
   static associate(models) {
-    this.hasOne(models.Subscription, { foreignKey: "id_fans" });
-    this.hasOne(models.Subscription, { foreignKey: "email" });
-    
     this.hasMany(models.Order, { foreignKey: "id_fans" });
-    this.hasMany(models.Follow, {foreignKey: "id_fans"});
+    this.hasMany(models.Follow, { foreignKey: "id_fans" });
+    this.hasOne(models.Plan, { foreignKey: 'id_fans' });
+    this.hasMany(models.PlanPayment, { foreignKey: 'id_fans' });
   }
 }
 Fans.init(

@@ -8,6 +8,7 @@ class Song extends Model {
     this.belongsTo(models.Album, { foreignKey: "id_album" });
     this.belongsTo(models.Genre, { foreignKey: "genre" });
     this.hasMany(models.PlaylistSong, { foreignKey: "id_song" });
+    this.hasMany(models.LikeSong, { foreignKey: 'id_song' });
   }
 }
 Song.init(
