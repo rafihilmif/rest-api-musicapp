@@ -35,4 +35,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-dir_to_ignore/public/assets/audio
+dir_to_ignore/public/assets/
