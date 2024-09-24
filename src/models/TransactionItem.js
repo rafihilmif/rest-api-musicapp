@@ -2,35 +2,34 @@ const { getDB } = require("../config/env");
 const sequelize = getDB();
 const { Model, DataTypes } = require("sequelize");
 
-class CartItem extends Model {
+class TransactionItem extends Model {
   static associate(models) {
-    this.belongsTo(models.Merch, { foreignKey: "id_merchandise" });
-      this.belongsTo(models.Cart, { foreignKey: "id_cart" });
+    // this.hasMany(models.Merch, { foreignKey: "name" });
   }
 }
-CartItem.init(
+TransactionItem.init(
   {
-    id_cart_item: {
+    id_transaction_item: {
       type: DataTypes.STRING(255),
       primaryKey: true,
       allowNull: false,
     },
-    id_cart: {
+    id_transaction: {
       type: DataTypes.STRING(255),
       allowNull: false,
-        },
+    },
      id_merchandise: {
       type: DataTypes.STRING(255),
       allowNull: false,
-        },
+    },
      size: {
-      type: DataTypes.STRING(10),
-      allowNull: true,
-        },
+      type: DataTypes.STRING(2),
+      allowNull: false,
+    },
      qty: {
       type: DataTypes.INTEGER(11),
       allowNull: false,
-        },
+    },
     created_at: {
       type: DataTypes.DATE(),
     },
@@ -38,9 +37,9 @@ CartItem.init(
   {
     sequelize,
     timestamps: false,
-    modelName: "CartItem",
-    tableName: "cart_item",
+    modelName: "TransactionItem",
+    tableName: "transaction_item",
   },
 );
 
-module.exports = CartItem;
+module.exports = TransactionItem;

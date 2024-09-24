@@ -18,11 +18,11 @@ const coreClient = new midtransClient.CoreApi({
 });
 router.post("/fans/plan", async function (req, res) {
     const { id } = req.query;
-
+   let newIdPrefixPlan = "PLN";
     let highestIdEntry = await Plan.findOne({
       where: {
         id_plan: {
-          [Op.like]: `${newIdPrefix}%`
+          [Op.like]: `${newIdPrefixPlan}%`
         }
       },
       order: [[ 'id_plan', 'DESC' ]] 
@@ -30,7 +30,7 @@ router.post("/fans/plan", async function (req, res) {
     let newIdNumber = 1;
     if (highestIdEntry) {
       let highestId = highestIdEntry.id_plan;
-      let numericPart = highestId.replace(newIdPrefix, ''); 
+      let numericPart = highestId.replace(newIdPrefixPlan, ''); 
       newIdNumber = parseInt(numericPart, 10) + 1;
     }
     let newIdPlan = newIdPrefix + newIdNumber.toString().padStart(3, '0');
@@ -58,12 +58,10 @@ router.post('/plan/payment', async function (req, res) {
   });
 
   try {
-    
-      
     let highestIdEntryPlanPayment = await PlanPayment.findOne({
       where: {
         id_plan_payment: {
-          [Op.like]: `${newIdPrefix}%`
+          [Op.like]: `${newIdPrefixPlanPayment}%`
         }
       },
       order: [['id_plan_payment', 'DESC']]

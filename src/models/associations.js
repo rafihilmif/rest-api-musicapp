@@ -8,13 +8,15 @@ const Category = require("./Category");
 const Genre = require("./Genre");
 const Plan = require("./Plan");
 const ImageMerch = require("./ImageMerch");
+const Cart = require('./Cart');
 const CartItem = require("./CartItem");
-const Order = require("./Order");
+const Ordered = require("./Ordered");
+const OrderedItem = require("./OrderedItem");
 const Playlist = require("./Playlist");
 const PlaylistSong = require("./PlaylistSong");
 const Follow = require("./Follow");
 const LikeSong = require("./LikeSong");
-const PlanPayment = require("./PlanyPayment");
+const PlanPayment = require("./PlanPayment");
 
 module.exports = function () {
   Artist.hasMany(Album, Merch, Song, Shows, { foreignKey: "id_artist" });
@@ -40,14 +42,19 @@ module.exports = function () {
   Fans.hasOne(Plan, { foreignKey: "id_fans" });
   Plan.belongsTo(Fans, { foreignKey: "id_fans" });
 
-  PlanPayment.belongsTo(Fans, { foreignKey: 'id_fans' });
-  Fans.hasMany(PlanPayment, { foreignKey: 'id_fans' });
+  PlanPayment.belongsTo(Fans, { foreignKey: "id_fans" });
+  Fans.hasMany(PlanPayment, { foreignKey: "id_fans" });
     
-  Fans.hasMany(Order, { foreignKey: "id_fans" });
+  Fans.hasMany(Ordered, { foreignKey: "id_fans" });
+  Fans.hasOne(Cart, { foreignKey: "id_fans" });
 
+  Cart.belongsTo(Fans, { foreignKey: 'id_fans' });
   CartItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
-  Order.belongsTo(Fans, { foreignKey: "id_fans" });
-  
+
+  Ordered.belongsTo(Fans, { foreignKey: "id_fans" });
+  Ordered.hasOne(OrderedItem, { foreignKey: "id_order" });
+  OrderedItem.belongsTo(Ordered, { foreignKey: "id_order" });
+
   Playlist.hasOne(PlaylistSong, {foreignKey: "id_playlist"})
   PlaylistSong.belongsTo(Playlist, { foreignKey: "id_playlist" });
   Song.hasMany(PlaylistSong, { foreignKey: "id_song" });
