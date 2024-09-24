@@ -11,7 +11,9 @@ const router = express.Router();
 router.get("/fans/cart", async function (req, res) {
     const { id } = req.query;
 
-    const cart = await Cart.findOne({
+
+    try {   
+            const cart = await Cart.findOne({
             where: {
                 id_fans: {
                     [Op.like]: id
@@ -20,7 +22,7 @@ router.get("/fans/cart", async function (req, res) {
         });
         if (!cart) {
             return res.status(400).json({ message: "Tidak ada barang yang ditambahkan" });
-    }
+        };
     const cartItems = await CartItem.findAll({
             where: {
                 id_cart: {
@@ -58,8 +60,6 @@ router.get("/fans/cart", async function (req, res) {
      });
 
     res.status(200).json({data: cartItems, totalItems: totalCartItems, totalQty: totalQtyItems});
-    try {   
-        
     } catch (error) {
         return res.status(400).send('gagal memuat data cart');
     }

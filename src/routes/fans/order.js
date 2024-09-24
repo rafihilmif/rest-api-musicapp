@@ -13,7 +13,8 @@ const Cart = require("../../models/Cart");
 const CartItem = require("../../models/CartItem");
 const ImageMerch = require("../../models/ImageMerch");
 const OrderedItem = require("../../models/OrderedItem");
-
+const Transaction = require("../../models/Transaction");
+const TransactionItem = require("../../models/TransactionItem");
 const router = express.Router();
 
 const snap = new midtransClient.Snap({
@@ -160,10 +161,10 @@ router.post('/fans/order/payment', async function (req, res) {
       order: [['id_order_item', 'DESC']]
     });
 
-    let newIdNumberOrderItem = 1;;
+    let newIdNumberOrderItem = 1;
     if (highestIdEntryOrderItem) {
       let highestIdOrderItem = highestIdEntryOrderItem.id_order_item;
-      let numericPartOrderItem = highestIdOrderItem.replace(newIdPrefixOrderItem, '');;
+      let numericPartOrderItem = highestIdOrderItem.replace(newIdPrefixOrderItem, '');
       newIdNumberOrderItem = parseInt(numericPartOrderItem, 10) + 1;
     }
     let newIdOrderItem = newIdPrefixOrderItem + newIdNumberOrderItem.toString().padStart(3, '0');
@@ -171,13 +172,12 @@ router.post('/fans/order/payment', async function (req, res) {
     const cartItems = await CartItem.findAll({
       where: {
         id_cart: dataCart.id_cart
-      }
-    });
-
-    const merchByArtist = await Merch.findAll({
-      where: {
-        id_merchandise : cartItems.id_merchandise 
-      }
+      },
+      include: [
+        {
+          model: Merch,
+        }
+      ]
     });
 
     for (const cartItem of cartItems) {
@@ -187,14 +187,90 @@ router.post('/fans/order/payment', async function (req, res) {
         id_merchandise: cartItem.id_merchandise,
         size: cartItem.size,
         qty: cartItem.qty,
-        price: cartItem.price,
         created_at: Date.now()
       });
       newIdNumberOrderItem++;
       newIdOrderItem = newIdPrefixOrderItem + newIdNumberOrderItem.toString().padStart(3, '0');
     }
 
-    
+    let artistIds = [];
+    let totalAmount = 0;
+
+    for (const cartItem of cartItems) {
+      const artistId = cartItem.Merchandise.id_artist;
+      if (!artistIds.includes(artistId)) {
+        artistIds.push(artistId);
+
+        let newIdPrefixTransaction = "TRS";
+
+        let highestIdEntryTransaction = await Transaction.findOne({
+          where: {
+            id_transaction: {
+              [Op.like]: `${newIdPrefixTransaction}%`
+            }
+          },
+          order: [['id_transaction', 'DESC']]
+        });
+
+        let newIdNumberTransaction = 1;
+        if (highestIdEntryTransaction) {
+          let highestIdTransaction = highestIdEntryTransaction.id_transaction;
+          let numericPartTransaction = highestIdTransaction.replace(newIdPrefixTransaction, '');
+          newIdNumberTransaction = parseInt(numericPartTransaction, 10) + 1;
+        }
+        let newIdTransaction = newIdPrefixTransaction + newIdNumberTransaction.toString().padStart(3, '0');
+
+        totalAmount = 0;
+        for (const item of cartItems) {
+          if (item.Merchandise.id_artist === artistId) {
+            totalAmount += item.qty * item.Merchandise.price;
+          }
+        }
+
+        await Transaction.create({
+          id_transaction: newIdTransaction,
+          id_artist: artistId,
+          name: `${first_name} ${last_name}`,
+          total: totalAmount,
+          address: address,
+          courier: courier,
+          status: "Pending",
+          created_at: Date.now()
+        });
+
+        let newIdPrefixTransactionItem = "TRSITM";
+
+        let highestIdEntryTransactionItem = await TransactionItem.findOne({
+          where: {
+            id_transaction_item: {
+              [Op.like]: `${newIdPrefixTransactionItem}%`
+            }
+          },
+          order: [['id_transaction_item', 'DESC']]
+        });
+
+        let newIdNumberTransactionItem = 1;
+        if (highestIdEntryTransactionItem) {
+          let highestIdTransactionItem = highestIdEntryTransactionItem.id_transaction_item;
+          let numericPartTransactionItem = highestIdTransactionItem.replace(newIdPrefixTransactionItem, '');
+          newIdNumberTransactionItem = parseInt(numericPartTransactionItem, 10) + 1;
+        }
+        let newIdTransactionItem = newIdPrefixTransactionItem + newIdNumberTransactionItem.toString().padStart(3, '0');
+
+         await TransactionItem.create({
+              id_transaction_item: newIdTransactionItem,
+              id_transaction: newIdTransaction,
+              id_merchandise: cartItem.id_merchandise,
+              size: cartItem.size,
+              qty: cartItem.qty,
+              created_at: Date.now()
+            });
+
+            newIdNumberTransactionItem++;
+            newIdTransactionItem = newIdPrefixTransactionItem + newIdNumberTransactionItem.toString().padStart(3, '0');
+      }
+    }
+
     await CartItem.destroy({
       where: {
         id_cart: {

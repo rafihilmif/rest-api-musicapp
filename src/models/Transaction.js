@@ -4,8 +4,7 @@ const { Model, DataTypes } = require("sequelize");
 
 class Transaction extends Model {
   static associate(models) {
-    // this.belongsTo(models.Fans, { foreignKey: "id_fans" });
-    
+    this.hasMany(models.TransactionItem, { foreignKey: "id_transaction" });
   }
 }
 Transaction.init(

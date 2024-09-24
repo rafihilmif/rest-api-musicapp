@@ -2,15 +2,16 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
-const registerFans = require("./routes/fans/register");
 const registerArtist = require("./routes/artist/register");
-const allAccountFans = require("./routes/fans/account");
+const accountArtist = require("./routes/artist/account");
 const album = require("./routes/artist/album");
 const shows = require("./routes/artist/shows");
-const login = require("./routes/login");
 const song = require("./routes/artist/song");
 const merch = require("./routes/artist/merchandise");
-const accountArtist = require("./routes/artist/account");
+const transaction = require("./routes/artist/transaction");
+
+const registerFans = require("./routes/fans/register");
+const accountFans = require("./routes/fans/account");
 const cart = require("./routes/fans/cart");
 const order = require("./routes/fans/order");
 const follow = require("./routes/fans/follow");
@@ -22,6 +23,7 @@ const admin_account = require("./routes/admin/account");
 const admin_song = require("./routes/admin/song");
 const admin_plan = require("./routes/admin/plan");
 
+const login = require("./routes/login");
 const general_song = require("./routes/general/song");
 const general_album = require("./routes/general/album");
 const general_artist = require("./routes/general/artist");
@@ -50,6 +52,8 @@ const Reported = require('./models/Reported');
 const Follow = require('./models/Follow');
 const LikeSong = require('./models/LikeSong');
 const PlanPayment = require("./models/PlanPayment");
+const Transaction = require("./models/Transaction");
+const TransactionItem = require("./models/TransactionItem");
 
 Artist.associate({ Merch, Shows, Album, Song, Genre, Follow, Reported });
 Fans.associate({Ordered, Follow, Plan, PlanPayment, Cart });
@@ -71,6 +75,8 @@ Follow.associate({ Artist, Fans });
 LikeSong.associate({ Song });
 Plan.associate({ Fans });
 PlanPayment.associate({ Fans });
+Transaction.associate({ TransactionItem });
+TransactionItem.associate({ Transaction });
 
 const app = express();
 app.set("port", 3030);
@@ -80,15 +86,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
-app.use("/api", registerFans);
 app.use("/api", registerArtist);
-app.use("/api", allAccountFans);
+app.use("/api", registerFans);
 app.use("/api", album);
 app.use("/api", shows);
-app.use("/api", login);
+app.use("/api", accountArtist);
+app.use("/api", transaction);
+
+app.use("/api", accountFans);
 app.use("/api", song);
 app.use("/api", merch);
-app.use("/api", accountArtist);
 app.use("/api", cart);
 app.use("/api", order);
 app.use("/api", follow);
@@ -100,6 +107,7 @@ app.use("/api", admin_account);
 app.use("/api", admin_song);
 app.use("/api", admin_plan);
 
+app.use("/api", login);
 app.use("/api", general_album);
 app.use("/api", general_song);
 app.use("/api", general_artist);
