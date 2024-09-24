@@ -22,6 +22,10 @@ PlanPayment.init(
       type: DataTypes.STRING(20),
       allowNull: true,
     },
+    total: {
+      type: DataTypes.INTEGER(20),
+      allowNull:false
+    },
     created_at: {
       type: DataTypes.DATE(),
       allowNull: false,

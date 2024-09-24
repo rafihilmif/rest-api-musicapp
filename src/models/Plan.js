@@ -27,7 +27,7 @@ Plan.init(
       allowNull: false,
     },
     limit_listening: {
-      type: DataTypes.INTEGER(2),
+      type: DataTypes.INTEGER(20),
       allowNull: false,
     },
     created_at: {
