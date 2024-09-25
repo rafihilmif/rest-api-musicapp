@@ -7,14 +7,14 @@ const midtransClient = require('midtrans-client');
 
 const Fans = require("../../models/Fans");
 const Merch = require("../../models/Merch");
-const Order = require("../../models/Ordered");
-const OrderItem = require("../../models/OrderedItem");
+const Ordered = require("../../models/Ordered");
+const OrderedItem = require("../../models/OrderedItem");
 const Cart = require("../../models/Cart");
 const CartItem = require("../../models/CartItem");
 const ImageMerch = require("../../models/ImageMerch");
-const OrderedItem = require("../../models/OrderedItem");
 const Transaction = require("../../models/Transaction");
 const TransactionItem = require("../../models/TransactionItem");
+const Merchandise = require("../../models/Merch");
 const router = express.Router();
 
 const snap = new midtransClient.Snap({
@@ -89,7 +89,7 @@ router.get('/shipping/city', async function (req, res) {
         res.status(500).json({ error: 'An error occurred while fetching shipping cost' });
     }
 });
-router.post('/fans/order/payment', async function (req, res) {
+router.post('/fans/order', async function (req, res) {
   const { id } = req.query;
   const { amount, address, courier, first_name, last_name, phone, email } = req.body; 
 
@@ -100,10 +100,10 @@ router.post('/fans/order/payment', async function (req, res) {
       }
     }
   });
-  let newIdPrefixOrderPayment = "ORDRD";
+  let newIdPrefixOrderPayment = "OREDR";
 
   try {
-    let highestIdEntryOrderPayment = await Order.findOne({
+    let highestIdEntryOrderPayment = await Ordered.findOne({
       where: {
         id_order: {
           [Op.like]: `${newIdPrefixOrderPayment}%`
@@ -136,7 +136,7 @@ router.post('/fans/order/payment', async function (req, res) {
     const transaction = await snap.createTransaction(transactionDetails);
     const snapToken = transaction.token;
 
-    await Order.create({
+    await Ordered.create({
       id_order: newIdOrderPayment,
       id_fans: id,
       email: email,
@@ -150,7 +150,7 @@ router.post('/fans/order/payment', async function (req, res) {
       created_at: Date.now()
     });
 
-    let newIdPrefixOrderItem = "ORDITM";
+    let newIdPrefixOrderItem = "OREDRITM";
 
     let highestIdEntryOrderItem = await OrderedItem.findOne({
       where: {
@@ -230,6 +230,7 @@ router.post('/fans/order/payment', async function (req, res) {
         await Transaction.create({
           id_transaction: newIdTransaction,
           id_artist: artistId,
+          id_order: newIdOrderPayment,
           name: `${first_name} ${last_name}`,
           total: totalAmount,
           address: address,
@@ -255,22 +256,25 @@ router.post('/fans/order/payment', async function (req, res) {
           let numericPartTransactionItem = highestIdTransactionItem.replace(newIdPrefixTransactionItem, '');
           newIdNumberTransactionItem = parseInt(numericPartTransactionItem, 10) + 1;
         }
-        let newIdTransactionItem = newIdPrefixTransactionItem + newIdNumberTransactionItem.toString().padStart(3, '0');
 
-         await TransactionItem.create({
+        for (const item of cartItems) {
+          if (item.Merchandise.id_artist === artistId) {
+            let newIdTransactionItem = newIdPrefixTransactionItem + newIdNumberTransactionItem.toString().padStart(3, '0');
+
+            await TransactionItem.create({
               id_transaction_item: newIdTransactionItem,
               id_transaction: newIdTransaction,
-              id_merchandise: cartItem.id_merchandise,
-              size: cartItem.size,
-              qty: cartItem.qty,
+              id_merchandise: item.id_merchandise,
+              size: item.size,
+              qty: item.qty,
               created_at: Date.now()
             });
 
             newIdNumberTransactionItem++;
-            newIdTransactionItem = newIdPrefixTransactionItem + newIdNumberTransactionItem.toString().padStart(3, '0');
+          }
+        }
       }
     }
-
     await CartItem.destroy({
       where: {
         id_cart: {
@@ -293,4 +297,166 @@ router.post('/fans/order/payment', async function (req, res) {
     res.status(500).json({ error: 'Failed to create transaction' });
   }
 });
+router.get("/fans/order", async function (req, res) {
+  const { id, page, pageSize} = req.query;
+  const limit = pageSize || 12;
+  const offset = (page - 1) * limit || 0;
+   
+  try {
+  const { rows, count } = await Ordered.findAndCountAll({
+      where: {
+        id_fans: id,
+      },
+      limit,
+      offset,
+      order: [[Sequelize.literal(`created_at`), "ASC"]],
+    });
+    return res.status(200).json({
+      data: rows,
+      total: count,
+    });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to get order' });
+  }
+});
+router.get("/fans/detail/order", async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    const data = await Ordered.findOne({
+      where: {
+        id_order: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to get order' });
+  }
+});
+
+router.get("/fans/item/order", async function (req, res) {
+  const { id } = req.query;
+    try {       
+     const data = await OrderedItem.findAll({
+            where: {
+                id_order: {
+                    [Op.like]: id
+                }
+            },
+            include: [
+                {
+                    model: Merch,
+                    attributes: ['name', 'price'],
+
+                    include: [{
+                        model: ImageMerch,
+                        attributes: ['name'],
+                        where: {
+                            number: 1
+                        }
+                    }]
+                }
+            ]
+    }); 
+    res.status(200).json(data);
+    } catch (error) {
+        return res.status(400).json({ error: 'Failed to get item in ordeer' });
+    }
+});
+router.get("/fans/order/confirm/payment", async function (req, res) {
+  const { idOrderPayment, idFans } = req.query;
+  try {
+    const checkPayment = await Ordered.findOne({
+      where: {
+        id_order: idOrderPayment
+      }
+    });
+
+    if (!checkPayment) {
+      return res.status(400).json({ error: 'Failed to get order payment' });
+    }
+    const response = await coreClient.transaction.status(checkPayment.id_order);
+
+    if (response.transaction_status !== 'settlement') {
+      return res.json(response);
+    }
+
+    await Ordered.update(
+      { status: "Settlement" },
+      {
+        where: {
+          id_order: checkPayment.id_order,
+          id_fans: idFans
+        }
+      }
+    );
+
+    const checkItemOrder = await OrderedItem.findAll({
+      where: {
+        id_order: checkPayment.id_order
+      }
+    });
+
+    for (const itemOrder of checkItemOrder) {
+      const merch = await Merchandise.findOne({
+        where: {
+          id_merchandise: itemOrder.id_merchandise
+        }
+      });
+      if (!merch) {
+        return res.status(400).json({ error: `Merchandise not found for ID: ${itemOrder.id_merchandise}` });
+      }
+      if (itemOrder.size !== null) {
+        const sizeField = itemOrder.size.toLowerCase();
+      if (!['s', 'm', 'l', 'xl'].includes(sizeField)) {
+        return res.status(400).json({ error: `Unknown size: ${itemOrder.size}` });
+      }
+
+      const newSizeStock = merch[sizeField] - itemOrder.qty;
+      if (newSizeStock < 0) {
+        return res.status(400).json({ error: `Insufficient stock for size ${itemOrder.size.toUpperCase()}` });
+      }
+
+      const newStock = merch.stock - itemOrder.qty;
+      
+      await Merchandise.update(
+        { 
+          [sizeField]: newSizeStock, 
+          stock: newStock 
+        },
+        { 
+          where: { id_merchandise: itemOrder.id_merchandise }
+        }
+      );
+      }
+      else {
+      const newStock = merch.stock - itemOrder.qty;
+      await Merchandise.update(
+        { 
+          stock: newStock 
+        },
+        { 
+          where: { id_merchandise: itemOrder.id_merchandise }
+        }
+      );
+      }
+    }
+    await Transaction.update({
+      status: "Settlement"
+    },{
+      where: {
+        id_order: {
+          [Op.like] : checkPayment.id_order
+        }
+      }
+    });
+    res.json({ ...response, stockUpdated: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -5,6 +5,7 @@ const { Model, DataTypes } = require("sequelize");
 class TransactionItem extends Model {
   static associate(models) {
     this.belongsTo(models.Transaction, { foreignKey: "id_transaction" });
+    this.belongsTo(models.Merch, { foreignKey: "id_merchandise" });
   }
 }
 TransactionItem.init(
@@ -24,7 +25,7 @@ TransactionItem.init(
     },
      size: {
       type: DataTypes.STRING(2),
-      allowNull: false,
+      allowNull: true,
     },
      qty: {
       type: DataTypes.INTEGER(11),

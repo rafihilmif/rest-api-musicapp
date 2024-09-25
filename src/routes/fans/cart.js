@@ -159,48 +159,66 @@ router.post("/fans/cart", async function (req, res) {
     }
 });
 router.put('/fans/cart', async function (req, res) {
-    const { id} = req.query;
+    const { id } = req.query;
     const { qty } = req.body;
 
-    let cartItem = await CartItem.findOne({
-        where: {
-            id_cart_item: id,
-         }
-    });
-
-    let merch = await Merch.findOne({
-        where: {
-            id_merchandise: {
-                [Op.like] : cartItem.id_merchandise         
+    try {
+        let cartItem = await CartItem.findOne({
+            where: {
+                id_cart_item: id,
             }
-        }
-    });
+        });
 
-    const size = cartItem.size;
-    let availableStock = 0;
-        switch (size) {
-            case 'S':
-                availableStock = merch.s;
-                break;
-            case 'M':
-                availableStock = merch.m;
-                break;
-            case 'L':
-                availableStock = merch.l;
-                break;
-            case 'XL':
-                availableStock = merch.xl;
-                break;
-            default:
-                return res.status(400).json({ message: 'Invalid size' });
+        if (!cartItem) {
+            return res.status(404).json({ message: 'Cart item not found' });
         }
-    if (availableStock < qty) {
-            return res.status(400).json({ message: 'Not enough stock available ' + size });
-    }
-    if (cartItem) {
+
+        let merch = await Merch.findOne({
+            where: {
+                id_merchandise: cartItem.id_merchandise         
+            }
+        });
+
+        if (!merch) {
+            return res.status(404).json({ message: 'Merchandise not found' });
+        }
+
+        let availableStock = 0;
+
+        if (merch.s !== 0 || merch.m !== 0 || merch.l !== 0 || merch.xl !== 0) {
+            const size = cartItem.size;
+            switch (size) {
+                case 'S':
+                    availableStock = merch.s;
+                    break;
+                case 'M':
+                    availableStock = merch.m;
+                    break;
+                case 'L':
+                    availableStock = merch.l;
+                    break;
+                case 'XL':
+                    availableStock = merch.xl;
+                    break;
+                default:
+                    return res.status(400).json({ message: 'Invalid size' });
+            }
+        } else {
+            availableStock = merch.stock;
+        }
+
+        if (availableStock < qty) {
+            return res.status(400).json({ message: `Not enough stock available${cartItem.size ? ' for size ' + cartItem.size : ''}` });
+        }
+
         cartItem.qty = qty;
         await cartItem.save();
-     }
+
+        res.status(200).json({ message: 'Cart updated successfully', cartItem });
+    } catch (error) {
+        console.error('Error updating cart:', error);
+        res.status(500).json({ message: 'An error occurred while updating the cart' });
+    }
 });
 router.delete("/fans/cart/item", async function (req, res) {
     const {id} = req.query;

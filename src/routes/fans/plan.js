@@ -129,7 +129,7 @@ router.get("/plan/payment", async function (req, res) {
 });
 
 router.get("/plan/confirm/payment", async function (req, res) {
-  const { idPlanPayment, idUser } = req.query;
+  const { idPlanPayment, idFans } = req.query;
 
   try {
     const checkPayment = await PlanPayment.findOne({
@@ -149,8 +149,13 @@ router.get("/plan/confirm/payment", async function (req, res) {
 
     if (response.transaction_status === 'settlement') {
       await PlanPayment.update(
-        { status: "Settlement" },
-        { where: { id_plan_payment: checkPayment.id_plan_payment } }
+        {
+          status: "Settlement"
+        },
+        {
+          where:
+            { id_plan_payment: checkPayment.id_plan_payment }
+        }
       );
       const startDate = new Date();
       const expiredDate = new Date();
@@ -168,7 +173,11 @@ router.get("/plan/confirm/payment", async function (req, res) {
           expired: expiredDate,
           limit_listening: 99999
         },
-        { where: { id_fans: idUser } }
+        {
+          where: {
+            id_fans: idFans
+          }
+        }
       );
     }
   } catch (err) {

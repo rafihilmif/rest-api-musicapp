@@ -5,7 +5,7 @@ const { Model, DataTypes } = require("sequelize");
 class Ordered extends Model {
   static associate(models) {
     this.belongsTo(models.Fans, { foreignKey: "id_fans" });
-    
+    this.hasOne(models.Transaction, { foreignKey: "id_order" });
   }
 }
 Ordered.init(

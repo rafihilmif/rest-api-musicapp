@@ -5,6 +5,7 @@ const { Model, DataTypes } = require("sequelize");
 class Transaction extends Model {
   static associate(models) {
     this.hasMany(models.TransactionItem, { foreignKey: "id_transaction" });
+    this.belongsTo(models.Ordered, { foreignKey: "id_order" });
   }
 }
 Transaction.init(
@@ -12,6 +13,10 @@ Transaction.init(
     id_transaction: {
       type: DataTypes.STRING(255),
       primaryKey: true,
+      allowNull: false,
+    },
+    id_order: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     id_artist: {

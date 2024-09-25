@@ -33,7 +33,7 @@ module.exports = function () {
   Song.belongsTo(Artist, { foreignKey: "id_artist" });
 
   Merch.belongsTo(Category, { foreignKey: "category" });
-  Merch.hasMany(ImageMerch, CartItem ,{ foreignKey: "id_merchandise" });
+  Merch.hasMany(ImageMerch, CartItem, OrderedItem, TransactionItem ,{ foreignKey: "id_merchandise" });
 
   ImageMerch.belongsTo(Merch, { foreignKey: "id_merchandise" });
   
@@ -71,4 +71,8 @@ module.exports = function () {
 
   Transaction.hasMany(TransactionItem, { foreignKey: "id_transaction" });
   TransactionItem.belongsTo(Transaction, { foreignKey: "id_transaction" });
+  Ordered.hasOne(Transaction, { foreignKey: "id_order" });
+  Transaction.belongsTo(Ordered, { foreignKey: "id_order" });
+  OrderedItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
+  TransactionItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
 };

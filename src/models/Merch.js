@@ -9,6 +9,8 @@ class Merchandise extends Model {
 
     this.hasMany(models.ImageMerch, { foreignKey: 'id_merchandise' });
     this.hasMany(models.CartItem, { foreignKey: "id_merchandise" });
+    this.hasMany(models.OrderedItem, { foreignKey: "id_merchandise" });
+    this.hasMany(models.TransactionItem, { foreignKey: "id_merchandise" });
   }
 }
 Merchandise.init(

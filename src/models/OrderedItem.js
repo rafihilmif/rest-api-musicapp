@@ -4,7 +4,7 @@ const { Model, DataTypes } = require("sequelize");
 
 class OrderedItem extends Model {
   static associate(models) {
-    // this.hasMany(models.Merch, { foreignKey: "name" });
+    this.belongsTo(models.Merch, { foreignKey: "id_merchandise" });
   }
 }
 OrderedItem.init(
@@ -24,7 +24,7 @@ OrderedItem.init(
     },
      size: {
       type: DataTypes.STRING(2),
-      allowNull: false,
+      allowNull: true,
     },
      qty: {
       type: DataTypes.INTEGER(11),

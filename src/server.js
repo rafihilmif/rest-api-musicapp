@@ -57,7 +57,7 @@ const TransactionItem = require("./models/TransactionItem");
 
 Artist.associate({ Merch, Shows, Album, Song, Genre, Follow, Reported });
 Fans.associate({Ordered, Follow, Plan, PlanPayment, Cart });
-Merch.associate({ Artist, Category, ImageMerch, CartItem });
+Merch.associate({ Artist, Category, ImageMerch, CartItem, OrderedItem, TransactionItem });
 ImageMerch.associate({ Merch });
 Category.associate({ Merch });
 Shows.associate({ Artist });
@@ -66,8 +66,6 @@ Song.associate({ Artist, Album, Genre, PlaylistSong, LikeSong});
 Genre.associate({ Artist, Song });
 Cart.associate({ Fans, CartItem });
 CartItem.associate({ Merch, Cart });
-Ordered.associate({ Fans, OrderedItem });
-OrderedItem.associate({ Ordered });
 Playlist.associate({ PlaylistSong });
 PlaylistSong.associate({ Playlist, Song });
 Reported.associate({Artist})
@@ -75,8 +73,10 @@ Follow.associate({ Artist, Fans });
 LikeSong.associate({ Song });
 Plan.associate({ Fans });
 PlanPayment.associate({ Fans });
-Transaction.associate({ TransactionItem });
-TransactionItem.associate({ Transaction });
+Ordered.associate({ Fans, OrderedItem, Transaction });
+OrderedItem.associate({ Ordered, Merch });
+Transaction.associate({ TransactionItem, Ordered });
+TransactionItem.associate({ Transaction, Merch});
 
 const app = express();
 app.set("port", 3030);
