@@ -10,8 +10,6 @@ const router = express.Router();
 
 router.get("/fans/cart", async function (req, res) {
     const { id } = req.query;
-
-
     try {   
             const cart = await Cart.findOne({
             where: {
@@ -33,7 +31,6 @@ router.get("/fans/cart", async function (req, res) {
                 {
                     model: Merch,
                     attributes: ['name', 'price'],
-
                     include: [{
                         model: ImageMerch,
                         attributes: ['name'],

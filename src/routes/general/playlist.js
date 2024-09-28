@@ -66,7 +66,26 @@ router.post(
       .send({ message: "playlist berhasil " + name + " ditambahkan" });
   },
 );
+router.get("/playlist", async function (req, res) {
+    const { id } = req.query;
 
+    try {
+        const data = await Playlist.findAll({
+            where: {
+                id_user: {
+                    [Op.notLike]: id
+            },
+          },
+          limit: 6,
+          order: Sequelize.literal('RAND()'), 
+        });
+    
+        return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to search for merchandise');
+    }
+    
+});
 router.get("/user/playlist", async function (req, res) {
     const { id } = req.query;
 
@@ -77,7 +96,7 @@ router.get("/user/playlist", async function (req, res) {
                     [Op.like]: id
                 }
             },
-            limit: 10
+            limit: 6
         });
     
         return res.status(200).json(data);
@@ -183,7 +202,7 @@ router.get('/search/song/playlist', async function (req, res) {
     const data = await Song.findAll({
       where: {
         name: {
-          [Op.like]: `%${q}%`  // Search for songs where the title matches the query
+          [Op.like]: `%${q}%`  
         },
       },
       include: [
@@ -197,7 +216,7 @@ router.get('/search/song/playlist', async function (req, res) {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('Search error:', error);  // Log error details for debugging
+    console.error('Search error:', error);  
     return res.status(500).send('Failed to search tracks');
   }
 });

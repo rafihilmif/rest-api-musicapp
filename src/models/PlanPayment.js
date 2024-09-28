@@ -22,6 +22,10 @@ PlanPayment.init(
       type: DataTypes.STRING(20),
       allowNull: true,
     },
+     type: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+    },
     total: {
       type: DataTypes.INTEGER(20),
       allowNull:false

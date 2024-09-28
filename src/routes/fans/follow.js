@@ -1,6 +1,6 @@
 const { response } = require("express");
 const express = require("express");
-const { Op, Sequelize } = require("sequelize");
+const { Op, Sequelize, Model } = require("sequelize");
 const Fans = require("../../models/Fans");
 
 const bcrypt = require("bcrypt");
@@ -8,6 +8,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const Follow = require("../../models/Follow");
+const Artist = require("../../models/Artist");
 const router = express.Router();
 
 router.post("/follow", async function (req, res) {
@@ -99,4 +100,44 @@ router.delete("/unfollow", async function (req, res) {
         return res.status(500).json({ error: 'Server error' });
     }
 });
+router.get("/fans/follow", async function (req, res) {
+    const { id } = req.query;
+    try {
+        const artistFollowed = await Follow.findAll({
+            where: {
+                id_fans: {
+                    [Op.like]: id
+                }
+            },
+            order: Sequelize.literal('RAND()'),
+            limit: 8
+        });
+
+        if (artistFollowed.length > 0) {
+            let data = [];
+            for (const hasBeenFollow of artistFollowed) {
+                const artistData = await Artist.findOne({
+                    where: {
+                        id_artist: hasBeenFollow.id_artist
+                    },
+                    attributes: ["name", "avatar"],
+                    
+                });
+                if (artistData) {
+                    data.push(artistData);
+                }
+            }
+            return res.status(200).json(data);
+        } else {
+            const randomArtists = await Artist.findAll({
+                order: Sequelize.literal('RAND()'),
+                limit: 8
+            });
+            return res.status(200).json(randomArtists);
+    }
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch followed artists' });
+    }
+});
+
 module.exports = router;

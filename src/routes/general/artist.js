@@ -7,20 +7,12 @@ const { func } = require("joi");
 
 const router = express.Router();
 router.get("/artists", async function (req, res) {
-  const { page, pageSize } = req.query;
-  const limit = pageSize || 6;
-  const offset = (page - 1) * limit || 0;
-
   try {
-    const { rows, count } = await Artist.findAndCountAll({
-      limit,
-      offset,
-      order: [[Sequelize.literal(`id_artist`), "ASC"]],
+    const data = await Artist.findAll({
+    limit : 6,
+    order: Sequelize.literal('RAND()'),
     });
-    return res.status(200).json({
-      data: rows,
-      total: count,
-    });
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(400).send("gagal memuat data");
   }

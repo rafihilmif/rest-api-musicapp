@@ -40,6 +40,7 @@ router.post("/fans/plan", async function (req, res) {
             id_plan: newIdPlan,
             id_fans: id,
             status: 1,
+            type: 'free',
             created_at: Date.now()
         });
     } catch (error) {
@@ -48,7 +49,7 @@ router.post("/fans/plan", async function (req, res) {
 });
 router.post('/plan/payment', async function (req, res) {
   const { id } = req.query;
-  const { amount } = req.body; 
+  const { amount, types} = req.body; 
   let newIdPrefixPlanPayment = "PLNPYMN";
 
   let dataFans = await Fans.findOne({
@@ -95,6 +96,7 @@ router.post('/plan/payment', async function (req, res) {
       id_plan_payment: newIdPlanPlayment,
       id_fans: id,
       status: "Pending",
+      type : types,
       total: amount,
       created_at: Date.now()
     });
@@ -127,7 +129,21 @@ router.get("/plan/payment", async function (req, res) {
     res.status(400).json({ error: 'Failed to get transaction' });
   }
 });
-
+router.get("/fans/detail/plan/payment", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await PlanPayment.findOne({
+      where: {
+        id_plan_payment: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to get tplan payment' });
+  }
+});
 router.get("/plan/confirm/payment", async function (req, res) {
   const { idPlanPayment, idFans } = req.query;
 
@@ -160,18 +176,22 @@ router.get("/plan/confirm/payment", async function (req, res) {
       const startDate = new Date();
       const expiredDate = new Date();
       let planDuration = 0;
+      let types = '';
 
       if (checkPayment.total === 66000) {
         planDuration = 1; 
+        types = 'premium';
       } else if (checkPayment.total === 106000) {
         planDuration = 3; 
+        types = 'deluxe';
       }
       expiredDate.setMonth(startDate.getMonth() + planDuration);
       await Plan.update(
         {
           start: startDate,
           expired: expiredDate,
-          limit_listening: 99999
+          limit_listening: 99999,
+          type : types
         },
         {
           where: {

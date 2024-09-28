@@ -5,9 +5,79 @@ const { Op, Sequelize } = require("sequelize");
 const Merch = require("../../models/Merch");
 const Artist = require("../../models/Artist");
 const Category = require("../../models/Category");
+const ImageMerch = require("../../models/ImageMerch");
 
 const router = express.Router();
+router.get('/image/merchandise', async function (req, res) {
+  const { id } = req.query;
+  const { number } = req.query;
 
+  if (number) {
+    try {
+    const data = await ImageMerch.findAll({
+      where: {
+        id_merchandise: {
+          [Op.like]: id
+        },
+        number: {
+          [Op.like] : number
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat gambar merchandise');
+  }
+  }
+  else {
+     try {
+    const data = await ImageMerch.findAll({
+      where: {
+        id_merchandise: {
+          [Op.like]: id
+        }
+      },
+      order: [[Sequelize.literal(`number`), "ASC"]],
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat gambar merchandise');
+  }
+  }
+ 
+});
+
+router.get("/merchandises", async function (req, res) {
+   try {
+     const data = await Merch.findAll({
+       limit: 5,
+       order: Sequelize.literal('RAND()'),
+       include: 
+        {
+          model: Artist,
+          attributes: ["name"],
+        },
+     });
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
+router.get("/merchandise", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Merch.findOne({
+      where: {
+        id_artist: {
+          [Op.like]: id,
+        },
+      },
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("gagal memuat data");
+  }
+});
 router.get("/collection/merchandise", async function (req, res) {
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
@@ -277,21 +347,7 @@ router.get("/collection/merchandise/sort/accessories", async function (req, res)
     return res.status(400).send("gagal memuat data");
   }
 });
-router.get("/merchandise", async function (req, res) {
-  const { id } = req.query;
-  try {
-    const data = await Merch.findOne({
-      where: {
-        id_artist: {
-          [Op.like]: id,
-        },
-      },
-    });
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(400).send("gagal memuat data");
-  }
-});
+
 
 router.get("/category", async function (req, res) {
   const { name } = req.query; 

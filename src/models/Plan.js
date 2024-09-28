@@ -30,6 +30,10 @@ Plan.init(
       type: DataTypes.INTEGER(20),
       allowNull: false,
     },
+    type: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+    },
     created_at: {
       type: DataTypes.DATE(),
       allowNull: false,
