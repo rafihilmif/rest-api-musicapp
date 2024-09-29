@@ -17,7 +17,7 @@ const coreClient = new midtransClient.CoreApi({
     clientKey: process.env.CLIENT_KEY
 });
 router.post("/fans/plan", async function (req, res) {
-    const { id } = req.query;
+  const { id } = req.query;
    let newIdPrefixPlan = "PLN";
     let highestIdEntry = await Plan.findOne({
       where: {

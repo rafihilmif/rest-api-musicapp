@@ -39,18 +39,17 @@ const storage = multer.diskStorage({
   },
 });
 
-router.get("/admin/album", async function (req, res) {
-  let { id_artist } = req.query;
+router.get("/admin/choose/album", async function (req, res) {
+  let { id} = req.query;
 
   const data = await Album.findAll({
     where: {
-      id_artist: id_artist,
+      id_artist: id,
     },
   });
-  return res.status(200).json({
-    data,
-  });
+  return res.status(200).json(data);
 });
+
 const upload = multer({ storage: storage });
 router.post(
   "/admin/song/add",
@@ -131,7 +130,7 @@ router.post(
 );
 router.get("/admin/songs", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 6;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
 
   try {
@@ -142,7 +141,11 @@ router.get("/admin/songs", async function (req, res) {
       include: [
         {
           model: Artist,
-          attributes: ["name"],
+          attributes: ["name", "avatar"],
+        },
+           {
+          model: Album,
+          attributes: ["name", "image"],
         },
       ],
     });

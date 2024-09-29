@@ -6,6 +6,7 @@ class Transaction extends Model {
   static associate(models) {
     this.hasMany(models.TransactionItem, { foreignKey: "id_transaction" });
     this.belongsTo(models.Ordered, { foreignKey: "id_order" });
+    this.belongsTo(models.Artist, { foreignKey: "id_artist" });
   }
 }
 Transaction.init(

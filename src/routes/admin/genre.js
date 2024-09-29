@@ -42,9 +42,18 @@ router.post("/admin/genre/add", async function (req, res) {
     .status(201)
     .send({ message: "genre " + name + " berhasil ditambahkan" });
 });
+router.get("/admin/choose/genre", async function (req, res) {
+  try {
+    const data = await Genre.findAll();
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get genre" + error);
+  }
+});
 router.get("/admin/genres", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 6;
+  const limit = pageSize || 8;
   const offset = (page - 1) * limit || 0;
 
   try {

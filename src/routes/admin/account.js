@@ -147,7 +147,7 @@ router.post(
 
 router.get("/admin/artists", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
 
   try {
@@ -253,14 +253,12 @@ router.put("/admin/artist/remove/avatar", async function (req, res) {
     return res.status(400).send("Gagal menghapus avatar");
   }
 });
-router.get("/admin/artist", async function (req, res) {
+router.get("/admin/choose/artist", async function (req, res) {
   try {
-    const dataArtist = await Artist.findAll();
-    return res.status(200).json({
-      data: dataArtist,
-    });
+    const data = await Artist.findAll();
+    return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send("Failed to get data artist" + error);
   }
 });
 router.post(
@@ -322,7 +320,7 @@ router.post(
 );
 router.get("/admin/fans", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
 
   try {

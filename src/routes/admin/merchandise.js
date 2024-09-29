@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const { func } = require("joi");
 const Merchandise = require("../../models/Merch");
+const ImageMerch = require("../../models/ImageMerch");
 
 const router = express.Router();
 
@@ -89,9 +90,10 @@ router.post("/admin/category/add", async function (req, res) {
     .status(201)
     .send({ message: "category " + name + " berhasil ditambahkan" });
 });
+
 router.get("/admin/categories", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 6;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
 
   try {
@@ -139,68 +141,81 @@ router.put("/admin/category", async function (req, res) {
   }
 });
 
-router.post(
-  "/admin/merchandise/add",
-  upload.single("image"),
-  async function (req, res) {
-    let {
-      name,
-      id_artist,
-      sizeS,
-      sizeM,
-      sizeL,
-      sizeXL,
-      price,
-      desc,
-      category,
-    } = req.body;
-    const filePath = req.file.filename;
+router.post('/admin/merchandise/add', upload.array('image', 5), async function (req, res) {
+  const { id } = req.query;
+  let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
 
-    const artist = await Artist.findAll({
-      where: {
-        id_artist: id_artist,
-      },
-    });
-    let nameArtist = null;
-    artist.forEach((item) => {
-      nameArtist = item.name;
-    });
-    let newIdPrefix = "MRCH";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Merch.findAll({
-      where: {
-        id_merchandise: {
-          [Op.like]: keyword,
-        },
-      },
-    });
+  const dataArtist = await Artist.findOne({
+    id_artist: {
+      [Op.like] : id
+    }
+  });
+  const imageUrl = req.files.map((file, index) => ({
+    filename: file.filename,
+    number: index + 1,
+  }));
 
-    let newIdMerchandise =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    await Merch.create({
-      id_merchandise: newIdMerchandise,
-      id_artist: id_artist,
-      name: name,
-      artist: nameArtist,
-      category: category,
-      s: sizeS,
-      m: sizeM,
-      l: sizeL,
-      xl: sizeXL,
-      price: price,
-      description: desc,
-      image: filePath,
-      created_at: Date.now(),
-      status: 1,
-    });
-    return res.status(201).send({
-      message: "merchandise berhasil ditambahkan kepada " + nameArtist.name,
-    });
-  },
-);
+  let newIdPrefix = "MRCH";
+  let keyword = `%${newIdPrefix}%`
+  let similiarUID = await Merch.findAll({
+        where: {
+            id_merchandise: {
+                [Op.like]: keyword
+            }
+        }
+  });
+  
+  let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
+
+  await Merch.create({
+        id_merchandise: newIdMerchandise,
+        id_artist: id,
+        name: name,
+        artist: dataArtist.name,
+        category: category,
+        s: sizeS,
+        m: sizeM,
+        l: sizeL,
+        xl: sizeXL,
+        stock: stock,
+        price:price,
+        description: description,
+        status: status,
+        created_at: Date.now(),
+        status: 1,
+  });
+
+    const imageEntries = imageUrl.map(({ filename, number }) => ({
+    id_merchandise: newIdMerchandise,
+    name: filename,
+    number: number,
+  }));
+
+  await ImageMerch.bulkCreate(imageEntries);
+
+  return res.status(201).send({ message: "merchandise berhasil ditambahkan" });
+});
+router.get("/admin/choose/categories", async function (req, res) {
+  try {
+    const data = await Category.findAll();
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get genre" + error);
+  }
+});
+router.get("/admin/choose/artist", async function (req, res) {
+  try {
+    const data = await Artist.findAll();
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get genre" + error);
+  }
+});
 router.get("/admin/merchs", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 12;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
 
   try {

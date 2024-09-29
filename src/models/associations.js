@@ -73,6 +73,7 @@ module.exports = function () {
   TransactionItem.belongsTo(Transaction, { foreignKey: "id_transaction" });
   Ordered.hasOne(Transaction, { foreignKey: "id_order" });
   Transaction.belongsTo(Ordered, { foreignKey: "id_order" });
+  Transaction.belongsTo(Artist, { foreignKey: "id_artist" });
   OrderedItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
   TransactionItem.belongsTo(Merch, { foreignKey: "id_merchandise" });
 };

@@ -19,7 +19,7 @@ router.get("/fans/cart", async function (req, res) {
             }
         });
         if (!cart) {
-            return res.status(400).json({ message: "Tidak ada barang yang ditambahkan" });
+            return res.status(400).json({ message: "Cart has been empty" });
         };
     const cartItems = await CartItem.findAll({
             where: {
@@ -55,10 +55,9 @@ router.get("/fans/cart", async function (req, res) {
                 id_cart: cart.id_cart
             }
      });
-
     res.status(200).json({data: cartItems, totalItems: totalCartItems, totalQty: totalQtyItems});
     } catch (error) {
-        return res.status(400).send('gagal memuat data cart');
+        return res.status(400).send('Failed to get data cart');
     }
 });
 

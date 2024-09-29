@@ -3,6 +3,7 @@ const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
 const Plan = require("../../models/Plan");
+const Fans = require("../../models/Fans");
 
 const multer = require("multer");
 const path = require("path");
@@ -39,11 +40,16 @@ router.post("/admin/plan/add", async function (req, res) {
 
 router.get("/admin/plan", async function (req, res) {
   const { page, pageSize } = req.query;
-  const limit = pageSize || 3;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
-
+   
+    
   try {
-    const { rows, count } = await Plan.findAndCountAll({
+   const { rows, count } = await Plan.findAndCountAll({
+      include: {
+              model: Fans,
+              attributes: ["email", "avatar", "username"]
+        },
       limit,
       offset,
       order: [[Sequelize.literal(`id_plan`), "ASC"]],

@@ -11,7 +11,7 @@ class Artist extends Model {
     this.hasMany(models.Follow, { foreignKey: "id_artist" });
     
     this.belongsTo(models.Genre, { foreignKey: "genre" });
-  
+    this.hasMany(models.Transaction, { foreignKey: "id_artist" });
   }
 }
 Artist.init(
