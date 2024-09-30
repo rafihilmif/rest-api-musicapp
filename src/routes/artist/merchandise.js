@@ -409,13 +409,22 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
         if (key === 'sizeXL') {
           merch.xl = parseInt(newData[key]) || 0;
         }
+        if (key === 'stock') {
+          merch.stock = parseInt(newData[key]) || 0;
+        }
         else {
            merch[key] = newData[key];
         }
       }
     });
 
-    merch.stock = parseInt(merch.s) + parseInt(merch.m ) + parseInt(merch.l) + parseInt(merch.xl );
+      if (merch.category === "T-shirt" || merch.category === "Long Sleeve" || merch.category === "Hoodie" || merch.category === "Zipper Hoodie" || merch.category === "Sweatshirt") {
+         merch.stock = parseInt(merch.s) + parseInt(merch.m ) + parseInt(merch.l) + parseInt(merch.xl );
+      }
+      else {
+        merch.stock = newData['stock'];
+      }
+ 
 
     await merch.save();
     
@@ -451,8 +460,6 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
         );
       }
     }
-
- 
     return res.status(200).send('Data successfully updated');
   } catch (error) {
     console.error('Failed to update data:', error);

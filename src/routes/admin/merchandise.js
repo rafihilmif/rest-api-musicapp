@@ -8,10 +8,11 @@ const Merch = require("../../models/Merch");
 
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const fs = require('fs').promises;
 const { func } = require("joi");
 const Merchandise = require("../../models/Merch");
 const ImageMerch = require("../../models/ImageMerch");
+
 
 const router = express.Router();
 
@@ -64,7 +65,10 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: { files: 5 }
+});
 
 router.post("/admin/category/add", async function (req, res) {
   let { name } = req.body;
@@ -237,7 +241,45 @@ router.get("/admin/merchs", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
-router.get("/admin/merch", async function (req, res) {
+router.get('/admin/image/merchandise', async function (req, res) {
+  const { id } = req.query;
+  const { number } = req.query;
+
+  if (number) {
+    try {
+    const data = await ImageMerch.findAll({
+      where: {
+        id_merchandise: {
+          [Op.like]: id
+        },
+        number: {
+          [Op.like] : number
+        }
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat gambar merchandise');
+  }
+  }
+  else {
+     try {
+    const data = await ImageMerch.findAll({
+      where: {
+        id_merchandise: {
+          [Op.like]: id
+        }
+      },
+      order: [[Sequelize.literal(`number`), "ASC"]],
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('gagal memuat gambar merchandise');
+  }
+  }
+ 
+});
+router.get("/admin/detail/merchandise", async function (req, res) {
   const { id } = req.query;
 
   try {
@@ -253,37 +295,84 @@ router.get("/admin/merch", async function (req, res) {
     return res.status(404).send("Gagal memuat data");
   }
 });
-router.put("/admin/merch", upload.single("image"), async function (req, res) {
+
+router.put("/admin/merchandise/update", upload.array('image', 5), async function (req, res) {
   const { id } = req.query;
   const newData = req.body;
-
   try {
-    const merch = await Merchandise.findByPk(id);
-    console.log(merch);
+    const merch = await Merch.findByPk(id);
+
     if (!merch) {
-      return res.status(404).send("Data tidak ditemukan");
+      return res.status(404).send('Data not found');
     }
+
     Object.keys(newData).forEach((key) => {
-      if (newData[key] !== undefined) {
-        merch[key] = newData[key];
+      if (newData[key] !== undefined && key !== 'image' && key !== 'number') {
+        if (key === 'sizeS') {
+          merch.s = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeM') {
+          merch.m = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeL') {
+          merch.l = parseInt(newData[key]) || 0;
+        } 
+        if (key === 'sizeXL') {
+          merch.xl = parseInt(newData[key]) || 0;
+        }
+        else {
+           merch[key] = newData[key];
+        }
       }
     });
-    if (req.file) {
-      const oldFilePath = "./public/assets/image/merchandise/" + merch.image;
-      fs.unlink(oldFilePath, (err) => {
-        if (err) {
-          console.error("Error deleting the old image:", err);
-          return res.status(500).send("Error deleting the old image");
-        }
-      });
-      merch.image = req.file.filename;
-    }
+
+    if (merch.category === "T-shirt" || merch.category === "Long Sleeve" || merch.category === "Hoodie" || merch.category === "Zipper Hoodie" || merch.category === "Sweatshirt") {
+         merch.stock = parseInt(merch.s) + parseInt(merch.m ) + parseInt(merch.l) + parseInt(merch.xl );
+      }
+    else {
+        merch.stock = newData['stock'];
+      }
 
     await merch.save();
+    
+    if (req.files && req.files.length > 0) {
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const imageData = {
+          name: file.filename, 
+        };
 
-    return res.status(200).send("Data berhasil diubah");
+        const number = Array.isArray(newData.number) ? newData.number[i] : newData.number;
+
+        const oldImage = await ImageMerch.findOne({
+          where: {
+            id_merchandise: id,
+            number: number,
+          }
+        });
+
+        if (oldImage) {
+          const filePath = "./public/assets/image/merchandise/" + oldImage.name; 
+          await fs.unlink(filePath); 
+        }
+
+        await ImageMerch.update(
+          imageData,
+          {
+            where: {
+              id_merchandise: id,
+              number: number,
+            },
+          }
+        );
+      }
+    }
+
+ 
+    return res.status(200).send('Data successfully updated');
   } catch (error) {
-    return res.status(400).send("Gagal merubah data");
+    console.error('Failed to update data:', error);
+    return res.status(400).send('Failed to update data');
   }
 });
 module.exports = router;
