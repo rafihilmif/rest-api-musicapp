@@ -51,7 +51,7 @@ const storage = multer.diskStorage({
       file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname);
     cb(null, fileName);
     req.on("aborted", () => {
-      const fullFilePath = path.join("assets", "image", "album", fileName);
+      const fullFilePath = path.join("assets", "image", "merchandise", fileName);
       file.stream.on("end", () => {
         fs.unlink(fullFilePath, (err) => {
           console.log(fullFilePath);
