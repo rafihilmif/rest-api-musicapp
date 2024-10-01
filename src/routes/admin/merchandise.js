@@ -306,36 +306,31 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
       return res.status(404).send('Data not found');
     }
 
+    const isGarment = ['T-shirt', 'Long Sleeve', 'Hoodie', 'Zipper Hoodie', 'Sweatshirt'].includes(merch.category);
+
     Object.keys(newData).forEach((key) => {
       if (newData[key] !== undefined && key !== 'image' && key !== 'number') {
-        if (key === 'sizeS') {
-          merch.s = parseInt(newData[key]) || 0;
-        } 
-        if (key === 'sizeM') {
-          merch.m = parseInt(newData[key]) || 0;
-        } 
-        if (key === 'sizeL') {
-          merch.l = parseInt(newData[key]) || 0;
-        } 
-        if (key === 'sizeXL') {
-          merch.xl = parseInt(newData[key]) || 0;
+        if (isGarment) {
+          if (key === 'sizeS') {
+            merch.s = parseInt(newData[key]) || 0;
+          }
+          if (key === 'sizeM') {
+            merch.m = parseInt(newData[key]) || 0;
+          }
+          if (key === 'sizeL') {
+            merch.l = parseInt(newData[key]) || 0;
+          }
+          if (key === 'sizeXL') {
+            merch.xl = parseInt(newData[key]) || 0;
+          }
         }
-        if (key === 'stock') {
-          merch.stock = parseInt(newData[key]) || 0;
-        }
-        else {
-           merch[key] = newData[key];
+        
+        if (!['sizeS', 'sizeM', 'sizeL', 'sizeXL'].includes(key)) {
+          merch[key] = newData[key];
         }
       }
     });
-
-    if (merch.category === "T-shirt" || merch.category === "Long Sleeve" || merch.category === "Hoodie" || merch.category === "Zipper Hoodie" || merch.category === "Sweatshirt") {
-         merch.stock = parseInt(merch.s) + parseInt(merch.m ) + parseInt(merch.l) + parseInt(merch.xl );
-      }
-    else {
-        merch.stock = newData['stock'];
-      }
-
+    
     await merch.save();
     
     if (req.files && req.files.length > 0) {

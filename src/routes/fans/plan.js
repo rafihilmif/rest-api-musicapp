@@ -6,7 +6,7 @@ const Plan = require("../../models/Plan");
 const PlanPayment = require("../../models/PlanPayment");
 const midtransClient = require('midtrans-client');
 const router = express.Router();
-
+const { v4: uuidv4 } = require('uuid');
 const snap = new midtransClient.Snap({
   isProduction: false, 
   serverKey: process.env.SERVER_KEY,
@@ -50,8 +50,8 @@ router.post("/fans/plan", async function (req, res) {
 router.post('/plan/payment', async function (req, res) {
   const { id } = req.query;
   const { amount, types} = req.body; 
-  let newIdPrefixPlanPayment = "PLNPYMN";
 
+  console.log(types);
   let dataFans = await Fans.findOne({
     where: {
       id_fans: id
@@ -59,21 +59,8 @@ router.post('/plan/payment', async function (req, res) {
   });
 
   try {
-    let highestIdEntryPlanPayment = await PlanPayment.findOne({
-      where: {
-        id_plan_payment: {
-          [Op.like]: `${newIdPrefixPlanPayment}%`
-        }
-      },
-      order: [['id_plan_payment', 'DESC']]
-    });
-    let newIdNumberPlanPayment = 1;
-    if (highestIdEntryPlanPayment) {
-      let highestIdPlanPayment = highestIdEntryPlanPayment.id_plan_payment;
-      let numericPartPlanPayment = highestIdPlanPayment.replace(newIdPrefixPlanPayment, ''); 
-      newIdNumberPlanPayment = parseInt(numericPartPlanPayment, 10) + 1;
-    }
-    let newIdPlanPlayment = newIdPrefixPlanPayment + newIdNumberPlanPayment.toString().padStart(3, '0');
+
+    let newIdPlanPlayment = uuidv4().replace(/-/g, '').substring(0, 7);
   
     const transactionDetails = {
       transaction_details: {
@@ -178,7 +165,7 @@ router.get("/plan/confirm/payment", async function (req, res) {
       let planDuration = 0;
       let types = '';
 
-      if (checkPayment.total === 66000) {
+      if (checkPayment.total === 66600) {
         planDuration = 1; 
         types = 'premium';
       } else if (checkPayment.total === 106000) {

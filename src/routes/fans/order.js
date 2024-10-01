@@ -5,6 +5,7 @@ const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 const midtransClient = require('midtrans-client');
 
+const { v4: uuidv4 } = require('uuid');
 const Fans = require("../../models/Fans");
 const Merch = require("../../models/Merch");
 const Ordered = require("../../models/Ordered");
@@ -100,25 +101,10 @@ router.post('/fans/order', async function (req, res) {
       }
     }
   });
-  let newIdPrefixOrderPayment = "OREDR";
 
   try {
-    let highestIdEntryOrderPayment = await Ordered.findOne({
-      where: {
-        id_order: {
-          [Op.like]: `${newIdPrefixOrderPayment}%`
-        }
-      },
-      order: [['id_order', 'DESC']]
-    });
-      
-    let newIdNumberOrderPayment = 1;
-    if (highestIdEntryOrderPayment) {
-      let highestIdOrderPayment = highestIdEntryOrderPayment.id_order;
-      let numericPartOrderPayment = highestIdOrderPayment.replace(newIdPrefixOrderPayment, ''); 
-      newIdNumberOrderPayment = parseInt(numericPartOrderPayment, 10) + 1;
-    }
-    let newIdOrderPayment = newIdPrefixOrderPayment + newIdNumberOrderPayment.toString().padStart(3, '0');
+    
+    let newIdOrderPayment = uuidv4().replace(/-/g, '').substring(0, 7);
   
     const transactionDetails = {
       transaction_details: {
