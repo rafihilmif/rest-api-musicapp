@@ -96,7 +96,6 @@ router.put("/account/artist", upload.single("image"), async function (req, res) 
     });
 
     if (req.file) {
-
       if (artist.avatar) {
         const oldFilePath = "./public/assets/image/avatar/" + artist.avatar;
         fs.unlink(oldFilePath, (err) => {

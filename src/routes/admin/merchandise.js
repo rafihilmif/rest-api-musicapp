@@ -320,6 +320,9 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
         if (key === 'sizeXL') {
           merch.xl = parseInt(newData[key]) || 0;
         }
+        if (key === 'stock') {
+          merch.stock = parseInt(newData[key]) || 0;
+        }
         else {
            merch[key] = newData[key];
         }
@@ -368,7 +371,6 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
       }
     }
 
- 
     return res.status(200).send('Data successfully updated');
   } catch (error) {
     console.error('Failed to update data:', error);
