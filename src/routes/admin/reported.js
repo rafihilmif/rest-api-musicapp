@@ -7,6 +7,7 @@ const Reported = require("../../models/Reported");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const Artist = require("../../models/Artist");
 
 const router = express.Router();
 
@@ -43,6 +44,38 @@ router.get("/admin/report", async function (req, res) {
     return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send("Failed to get data reported");
+  }
+});
+router.put("/admin/block", async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    await Artist.update({ status: 0 }, {
+      where: {
+        id_artist: {
+          [Op.like] : id
+        }
+      }
+    });
+    return res.status(200).json("Artist has been block");
+  } catch (error) {
+    return res.status(400).send("Failed to block artist");
+  }
+});
+router.put("/admin/unblock", async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    await Artist.update({ status: 1 }, {
+      where: {
+        id_artist: {
+          [Op.like]: id
+        }
+      }
+    });
+    return res.status(200).json("Artist was unblock");
+  } catch (error) {
+    return res.status(400).send("Failed to unblock artist");
   }
 });
 module.exports = router;

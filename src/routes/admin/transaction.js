@@ -11,9 +11,9 @@ const TransactionItem = require("../../models/TransactionItem");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const ImageMerch = require("../../models/ImageMerch");
 
 const router = express.Router();
-
 
 router.get("/admin/transaction", async function (req, res) {
  const { page, pageSize } = req.query;
@@ -37,5 +37,51 @@ router.get("/admin/transaction", async function (req, res) {
   } catch (error) {
     return res.status(400).send("Failed to get data transaction" + error);
   }
+});
+router.get("/admin/detail/transaction", async function (req, res) {
+    const { id } = req.query;
+
+    try {
+         const data = await Transaction.findOne({
+        where: {
+            id_transaction: {
+                [Op.like] : id
+            }
+        }
+         });
+        return res.status(200).json(data);
+    } catch (error) {
+        return res.status(400).json({ error: 'Failed to get detail transaction' });
+    }
+});
+router.get("/admin/item/transaction", async function (req, res) {
+    const { id } = req.query;
+     
+    try {       
+        const data = await TransactionItem.findAll({
+            where: {
+                id_transaction: {
+                    [Op.like]: id
+                }
+            },
+            include: [
+                {
+                    model: Merch,
+                    attributes: ['name', 'price'],
+
+                    include: [{
+                        model: ImageMerch,
+                        attributes: ['name'],
+                        where: {
+                            number: 1
+                        }
+                    }]
+                }
+            ]
+        });
+    res.status(200).json(data);
+    } catch (error) {
+        return res.status(400).send('gagal memuat data cart');
+    }
 });
 module.exports = router;
