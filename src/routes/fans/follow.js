@@ -120,7 +120,7 @@ router.get("/fans/follow", async function (req, res) {
                     where: {
                         id_artist: hasBeenFollow.id_artist
                     },
-                    attributes: ["name", "avatar"],
+                    attributes: ["name", "avatar", "id_artist"],
                     
                 });
                 if (artistData) {
