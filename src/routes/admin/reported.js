@@ -26,7 +26,23 @@ router.get("/admin/reported", async function (req, res) {
       total: count,
     });
   } catch (error) {
-    return res.status(400).send("Failed to get data transaction" + error);
+    return res.status(400).send("Failed to get data reported" + error);
+  }
+});
+router.get("/admin/report", async function (req, res) {
+  const {id} = req.query;
+  const data = await Reported.findOne({
+      where: {
+        id_report: {
+          [Op.like] : id
+        }
+      }
+    });
+  try {
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("Failed to get data reported");
   }
 });
 module.exports = router;
