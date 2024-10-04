@@ -5,7 +5,6 @@ const Artist = require("../../models/Artist");
 const Merch = require("../../models/Merch");
 const router = express.Router();
 
-
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
@@ -18,19 +17,6 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "./public/assets/image/merchandise");
   },
-  fileFilter: function name(req, file, cb) {
-    if (
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/gif"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      cb(new Error("Only .png, .gif, .jpg and .jpeg format allowed!"));
-    }
-  },
   filename: function name(req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const fileName =
@@ -40,20 +26,112 @@ const storage = multer.diskStorage({
       const fullFilePath = path.join("assets", "image", "merchandise", fileName);
       file.stream.on("end", () => {
         fs.unlink(fullFilePath, (err) => {
-          console.log(fullFilePath);
-          if (err) {
-            throw err;
-          }
+          console.error("Error deleting file on abort:", err);
         });
       });
       file.stream.emit("end");
     });
   },
 });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true); 
+  } else {
+    const error = new Error("Only .png, .jpg, and .jpeg formats are allowed!");
+    error.path = "file";
+    return cb(error);
+  }
+};
 const upload = multer({ 
   storage: storage,
-  limits: { files: 5 }
+  limits: { files: 5 },
+  fileFilter: fileFilter,
 });
+router.post('/artist/merchandise/add', upload.array('image', 5), async function (req, res) {
+  const { id} = req.query;
+  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
+
+   const imageUrl = req.files.map((file, index) => ({
+    filename: file.filename,
+    number: index + 1,
+   }));
+  
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    artist: Joi.string().required(),
+    category: Joi.string().required(),
+    price: Joi.number().greater(0).required(),
+    description: Joi.string(),
+    status: Joi.number(),
+    sizeS: Joi.number(),
+    sizeM: Joi.number(),
+    sizeL: Joi.number(),
+    sizeXL: Joi.number(),
+    stock: Joi.number()
+  });
+
+  try {
+    await schema.validateAsync(req.body);
+    let newIdPrefixMerch = "MRCH";
+    let highestIdEntryMerch = await Merch.findOne({
+      where: {
+        id_merchandise: {
+          [Op.like]: `${newIdPrefixMerch}%`
+        }
+      },
+      order: [['id_merchandise', 'DESC']]
+    });
+    let newIdNumberMerch = 1;
+    if (highestIdEntryMerch) {
+      let highestIdMerch = highestIdEntryMerch.id_merchandise;
+      let numericPartMerch = highestIdMerch.replace(newIdPrefixMerch, ''); 
+      newIdNumberMerch = parseInt(numericPartMerch, 10) + 1;
+    }
+    let newIdMerchandise = newIdPrefixMerch + newIdNumberMerch.toString().padStart(3, '0');
+
+    await Merch.create({
+      id_merchandise: newIdMerchandise,
+      id_artist: id,
+      name: name,
+      artist: artist,
+      category: category,
+      s: sizeS,
+      m: sizeM,
+      l: sizeL,
+      xl: sizeXL,
+      stock: stock,
+      price: price,
+      description: description,
+      status: status,
+      created_at: Date.now(),
+      status: 1,
+    });
+
+    const imageEntries = imageUrl.map(({ filename, number }) => ({
+      id_merchandise: newIdMerchandise,
+      name: filename,
+      number: number,
+    }));
+    await ImageMerch.bulkCreate(imageEntries);
+    return res.status(201).json({message:"Successfully added merchandise"});
+  } catch (error) {
+    if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+  }
+});
+
 router.get("/artist/collection/merchandise", async function (req, res) {
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
@@ -334,55 +412,7 @@ router.get('/artist/image/merchandise', async function (req, res) {
   }
  
 });
-router.post('/artist/merchandise/add', upload.array('image', 5), async function (req, res) {
 
-  const { id } = req.query;
-  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
-  const imageUrl = req.files.map((file, index) => ({
-    filename: file.filename,
-    number: index + 1,
-  }));
-
-  let newIdPrefix = "MRCH";
-  let keyword = `%${newIdPrefix}%`
-  let similiarUID = await Merch.findAll({
-        where: {
-            id_merchandise: {
-                [Op.like]: keyword
-            }
-        }
-  });
-  
-  let newIdMerchandise = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
-
-  await Merch.create({
-        id_merchandise: newIdMerchandise,
-        id_artist: id,
-        name: name,
-        artist: artist,
-        category: category,
-        s: sizeS,
-        m: sizeM,
-        l: sizeL,
-        xl: sizeXL,
-        stock: stock,
-        price:price,
-        description: description,
-        status: status,
-        created_at: Date.now(),
-        status: 1,
-  });
-
-    const imageEntries = imageUrl.map(({ filename, number }) => ({
-    id_merchandise: newIdMerchandise,
-    name: filename,
-    number: number,
-  }));
-
-  await ImageMerch.bulkCreate(imageEntries);
-
-  return res.status(201).send({ message: "merchandise berhasil ditambahkan" });
-});
 
 router.put('/artist/merch/update', upload.array('image', 5), async function (req, res) {
   const { id } = req.query;

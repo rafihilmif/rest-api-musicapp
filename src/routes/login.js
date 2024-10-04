@@ -125,16 +125,23 @@ router.post("/auth/login", async function (req, res) {
     },
   });
 
+  
   if (existArtist.length > 0) {
-    const passwordArtist = await Artist.findAll({
+    const dataArtist = await Artist.findAll({
       where: {
         email: email,
       },
     });
     let tempPassword = null;
-    passwordArtist.forEach((element) => {
+    let temStatus = null;
+    dataArtist.forEach((element) => {
       tempPassword = element.password;
+      temStatus = element.status;
     });
+    if (temStatus === 0) {
+      return res.status(400).json("Your account has been locked");
+    }
+    else {
     let passwordHashArtist = tempPassword;
     if (bcrypt.compareSync(password, passwordHashArtist)) {
       const user = await Artist.findOne({
@@ -145,17 +152,19 @@ router.post("/auth/login", async function (req, res) {
       return res.status(200).json(user);
     } else {
       return res.status(400).send({
-        message: "Password salah, login gagal",
+        message: "Password was incorrect",
       });
     }
-  } else if (existFans.length > 0) {
-    const passwordFans = await Fans.findAll({
+    } 
+  }
+  if (existFans.length > 0) {
+    const dataFans = await Fans.findAll({
       where: {
         email: email,
       },
     });
     let tempPassword = null;
-    passwordFans.forEach((element) => {
+    dataFans.forEach((element) => {
       tempPassword = element.password;
     });
     let passwordHashFans = tempPassword;
@@ -169,12 +178,12 @@ router.post("/auth/login", async function (req, res) {
       return res.status(200).json(user);
     } else {
       return res.status(400).send({
-        message: "Password salah, login gagal",
+        message: "Password was incorrect",
       });
     }
   } else {
     return res.status(404).send({
-      message: "Data tidak valid, login gagal",
+      message: "Data not valid, please check again",
     });
   }
 });

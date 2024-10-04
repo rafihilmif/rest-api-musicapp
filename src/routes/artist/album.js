@@ -10,7 +10,7 @@ const multer = require("multer");
 const path = require("path");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
-
+const Joi = require("joi");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -47,30 +47,56 @@ router.post(
 
     const filePath = req.file.filename;
 
-    let newIdPrefix = "ALBM";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Album.findAll({
-      where: {
-        id_album: {
-          [Op.like]: keyword,
+    const schema = Joi.object({
+    name: Joi.string().required(),
+    description: Joi.string().allow(null),
+    status: Joi.number(),
+     });
+    
+    try {
+      await schema.validateAsync(req.body);
+      let newIdPrefixAlbum = "ALBM";
+      let highestIdEntryAlbum = await Album.findOne({
+        where: {
+          id_album: {
+            [Op.like]: `${newIdPrefixAlbum}%`
+          }
         },
-      },
-    });
-    let newIdAlbum =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+        order: [['id_album', 'DESC']]
+      });
+      let newIdNumberAlbum = 1;
+      if (highestIdEntryAlbum) {
+      let highestIdAlbum = highestIdEntryAlbum.id_album;
+      let numericPartAlbum = highestIdAlbum.replace(newIdPrefixAlbum, ''); 
+      newIdNumberAlbum = parseInt(numericPartAlbum, 10) + 1;
+      }
+      let newIdAlbum = newIdPrefixAlbum + newIdNumberAlbum.toString().padStart(3, '0');
 
-    await Album.create({
-      id_album: newIdAlbum,
-      id_artist: id,
-      name: name,
-      description: description,
-      image: filePath,
-      created_at: Date.now(),
-      status: status,
-    });
-    return res
-      .status(201)
-      .send({ message: "album berhasil " + name + " ditambahkan" });
+      await Album.create({
+        id_album: newIdAlbum,
+        id_artist: id,
+        name: name,
+        description: description,
+        image: filePath,
+        created_at: Date.now(),
+        status: status,
+      });
+     return res.status(201).json({message:"Successfully added album"});
+    } catch (error) {
+      if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+    }
   },
 );
 

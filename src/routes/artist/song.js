@@ -1,45 +1,76 @@
 const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
-const Artist = require("../../models/Artist");
-const Song = require("../../models/Song");
-
+const Joi = require("joi");
 const sharp = require('sharp');
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const Album = require("../../models/Album");
 
+const Album = require("../../models/Album");
+const Artist = require("../../models/Artist");
+const Song = require("../../models/Song");
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: function name(req, file, cb) {
+  destination: function (req, file, cb) {
     if (file.fieldname === "image") {
       cb(null, "./public/assets/image/song");
-    }
-    if (file.fieldname === "audio") {
+    } else if (file.fieldname === "audio") {
       cb(null, "./public/assets/audio");
     }
   },
-  filename: function name(req, file, cb) {
-    if (file.fieldname === "image") {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(
-        null,
-        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
-      );
-    }
-    if (file.fieldname === "audio") {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(
-        null,
-        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
-      );
-    }
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const fileName = file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname);
+    cb(null, fileName);
+    
+    req.on("aborted", () => {
+      let fullFilePath;
+      if (file.fieldname === "image") {
+        fullFilePath = path.join("public", "assets", "image", "song", fileName);
+      } else if (file.fieldname === "audio") {
+        fullFilePath = path.join("public", "assets", "audio", fileName);
+      }
+      
+      file.stream.on("end", () => {
+        fs.unlink(fullFilePath, (err) => {
+          if (err) console.error("Error deleting file on abort:", err);
+        });
+      });
+      file.stream.emit("end");
+    });
   },
 });
-
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "image") {
+    const allowedImageTypes = ["image/png", "image/jpg", "image/jpeg"];
+    if (allowedImageTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      const error = new Error("Only .png, .jpg, and .jpeg formats are allowed for images!");
+      error.path = "file";
+      return cb(error);
+    }
+  } else if (file.fieldname === "audio") {
+    const allowedAudioTypes = ["audio/mpeg"];
+    if (allowedAudioTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      const error = new Error("Only .mp3 formats are allowed for audio!");
+      error.path = "fileimage";
+      return cb(error);
+    }
+  } else {
+    const error = new Error("Unexpected file field!");
+    error.path = "fileaudio";
+    return cb(error);
+  }
+};
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+ });
 
 router.post(
   "/artist/song/add",
@@ -60,118 +91,96 @@ router.post(
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
     
-    const artist = await Artist.findByPk(id);
-    if (!artist) {
-      return res.status(404).send('artist not found');
-    }
-
+    const schema = Joi.object({
+    album: Joi.string().allow(null),
+    name: Joi.string().required(),
+    genre: Joi.string().required(),
+    release_date: Joi.date().required(),
+    credit: Joi.string().allow(null),
+    lyric: Joi.string().allow(null),
+    status: Joi.number()
+    });
+    
     try {
-
-      const watermarkFolderPath = './public/assets/image/watermark';
-      const songFolderPath = './public/assets/image/song';
-      const originalFilename = graphicFile.filename;
-      const pathInWatermarkFolder = path.join(watermarkFolderPath, originalFilename);
-      const finalPathInSongFolder = path.join(songFolderPath, originalFilename);
-      
-      fs.mkdir(watermarkFolderPath, { recursive: true }, (err) => {
-          if (err) {
-            console.error('Error creating watermark folder:', err);
-            return res.status(500).send({ message: "Error processing image" });
-          }
-
-          fs.rename(graphicFile.path, pathInWatermarkFolder, (err) => {
-            if (err) {
-              console.error('Error moving file to watermark folder:', err);
-              return res.status(500).send({ message: "Error processing image" });
-            }
-
-            sharp(pathInWatermarkFolder)
-              .composite([
-                {
-                  input: {
-                    text: {
-                       text: `copyright © ${artist.name}`,
-    fontSize: 24,
-    fontWeight: 'bold',
-    rgba: true,
-    fill: { r: 255, g: 255, b: 255, alpha: 0.5 }
-                    }
-                  },
-                  gravity: 'southeast'
-                }
-              ])
-              .toFile(finalPathInSongFolder, (err) => {
-                if (err) {
-                  console.error('Error processing final image:', err);
-                  return res.status(500).send({ message: "Error processing image" });
-                }
-
-                fs.unlink(pathInWatermarkFolder, (err) => {
-                  if (err) {
-                    console.error('Error deleting file from watermark folder:', err);
-            
-                  }
-
-                  let newIdPrefix = "SNGS";
-                  let keyword = `%${newIdPrefix}%`;
-
-                  Song.findAll({
-                    where: {
-                      id_song: {
-                        [Op.like]: keyword,
-                      },
-                    },
-                  }).then((similiarUID) => {
-                    let newIdSong = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-                    
-                    Album.findAll({
-                      where: {
-                        name: {
-                          [Op.like]: album,
-                        },
-                      },
-                    }).then((dataAlbum) => {
-                      let idAlbum = null;
-                      dataAlbum.forEach((element) => {
-                        idAlbum = element.id_album;
-                      });
-
-                      Song.create({
-                        id_song: newIdSong,
-                        id_artist: id,
-                        id_album: idAlbum,
-                        album: album,
-                        name: name,
-                        genre: genre,
-                        release_date: release_date,
-                        credit: credit,
-                        lyric: lyric,
-                        image: originalFilename,
-                        audio: audioFile.filename,
-                        created_at: Date.now(),
-                        status: status,
-                      }).then(() => {
-                        return res.status(200).send({ message: "track berhasil ditambahkan" });
-                      }).catch((error) => {
-                        console.error('Error creating song:', error);
-                        return res.status(500).send({ message: "Error creating song" });
-                      });
-                    }).catch((error) => {
-                      console.error('Error finding album:', error);
-                      return res.status(500).send({ message: "Error finding album" });
-                    });
-                  }).catch((error) => {
-                    console.error('Error finding similar songs:', error);
-                    return res.status(500).send({ message: "Error finding similar songs" });
-                  });
-                });
-              });
-          });
-        });
-    } catch (error) {
-      ret
+      await schema.validateAsync(req.body);
+    let newIdPrefixSong = "SNGS";
+    let highestIdEntrySong = await Song.findOne({
+      where: {
+        id_song: {
+          [Op.like]: `${newIdPrefixSong}%`
+        }
+      },
+      order: [['id_song', 'DESC']]
+    });
+    let newIdNumberSong = 1;
+    if (highestIdEntrySong) {
+      let highestIdSong = highestIdEntrySong.id_song;
+      let numericPartSong = highestIdSong.replace(newIdPrefixSong, ''); 
+      newIdNumberSong = parseInt(numericPartSong, 10) + 1;
     }
-  }
+    let newIdSong = newIdPrefixSong + newIdNumberSong.toString().padStart(3, '0');
+    const dataAlbum = await Album.findAll({
+      where: {
+        name: {
+          [Op.like]: album,
+        },
+      },
+    });
+    let idAlbum = null;
+    dataAlbum.forEach((element) => {
+      idAlbum = element.id_album;
+    });
+      if (album === "-") {
+      await Song.create({
+        id_song: newIdSong,
+        id_artist: id,
+        id_album: null,
+        name: name,
+        album: null,
+        genre: genre,
+        release_date: release_date,
+        credit: credit,
+        lyric: lyric,
+        image: graphicFile.filename,
+        audio: audioFile.filename,
+        created_at: Date.now(),
+        status: status,
+      });
+      }
+      else {
+        await Song.create({
+        id_song: newIdSong,
+        id_artist: id,
+        id_album: idAlbum,
+        name: name,
+        album: album,
+        genre: genre,
+        release_date: release_date,
+        credit: credit,
+        lyric: lyric,
+        image: graphicFile.filename,
+        audio: audioFile.filename,
+        created_at: Date.now(),
+        status: status,
+      });
+      }
+    return res.status(201).json({message:"Successfully added song"});
+    } catch (error) {
+       if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+    }
+  },
 );
 
 router.get("/artist/collection/song", async function (req, res) {

@@ -9,60 +9,53 @@ const bcrypt = require("bcrypt");
 const Plan = require("../../models/Plan");
 
 const checkEmail = async (email) => {
-  const artistEmail = await Artist.findOne({
+  const dataCheck = await Fans.findOne({
     where: {
       email: {
         [Op.like]: email,
       },
     },
   });
-  const fansEmail = await Fans.findOne({
-    where: {
-      email: {
-        [Op.like]: email,
-      },
-    },
-  });
-  if (artistEmail || fansEmail) {
-    throw new Error("email has been taken");
+  if (dataCheck) {
+    const error = new Error("Email already taken");
+    error.path = "email"; 
+    throw error; 
   }
+  return email; 
 };
+
 const checkUsername = async (username) => {
-  const artistUsername = await Artist.findOne({
+  const dataCheck = await Fans.findOne({
     where: {
       username: {
         [Op.like]: username,
       },
     },
   });
-  const fansUsername = await Fans.findOne({
-    where: {
-      username: {
-        [Op.like]: username,
-      },
-    },
-  });
-  if (artistUsername || fansUsername) {
-    throw new Error("username has been taken");
+  if ( dataCheck) {
+    const error = new Error("Username already taken");
+    error.path = "username"; 
+    throw error; 
   }
+  return username; 
 };
 
 router.post("/register/fans", async function (req, res) {
-  let { email, password, confirm_password, username } = req.body;
+  let { email, password, username } = req.body;
 
   const schema = Joi.object({
-    email: Joi.string()
-      .external(checkEmail)
-      .email({ minDomainSegments: 2, tlds: { allow: ["com"] } })
-      .required(),
-    username: Joi.string().external(checkUsername).required(),
-    password: Joi.string().required(),
+    email: Joi.string().external(checkEmail).email({ minDomainSegments: 2, tlds: { allow: ["com"] } }).required(),
+    username: Joi.string().min(4).external(checkUsername).pattern(new RegExp('^[a-z0-9]+$')).required(),
+    password: Joi.string().min(6).pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required(),
     confirm_password: Joi.any()
       .valid(Joi.ref("password"))
       .required()
       .options({ messages: { "any.only": "password does not match" } }),
   });
-  let newIdPrefixFans = "FNS";
+
+    try {
+      await schema.validateAsync(req.body);
+      let newIdPrefixFans = "FNS";
     let highestIdEntryFans = await Fans.findOne({
       where: {
         id_fans: {
@@ -78,13 +71,6 @@ router.post("/register/fans", async function (req, res) {
       newIdNumberFans = parseInt(numericPartFans, 10) + 1;
     }
   let newIdFans = newIdPrefixFans + newIdNumberFans.toString().padStart(3, '0');
-
-  try {
-    await schema.validateAsync(req.body);
-  } catch (error) {
-    return res.status(400).json(error.toString());
-  }
-  
   const passwordHash = bcrypt.hashSync(password, 10);
 
    let newIdPrefixPlan = "PLN";
@@ -103,8 +89,6 @@ router.post("/register/fans", async function (req, res) {
       newIdNumberPlan = parseInt(numericPartPlan, 10) + 1;
     }
     let newIdPlan = newIdPrefixPlan + newIdNumberPlan.toString().padStart(3, '0');
-    
-
    try {
      await Plan.create({
        id_plan: newIdPlan,
@@ -132,9 +116,24 @@ router.post("/register/fans", async function (req, res) {
        created_at: Date.now(),
        status: 1,
      })
-     return res.status(201).json("Successfully register as Fans");
+     return res.status(201).json({message:"Successfully register as Fans"});
     } catch (error) {
-        return res.status(400).send("create plan" + error);
+     return res.status(400).send("Failed to register" + error);
+  }
+  } catch (error) {
+      if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
   }
   
 });

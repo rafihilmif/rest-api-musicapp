@@ -56,7 +56,7 @@ router.get("/collection/song", async function (req, res) {
           },
         },
       ],
-      limit : 6,
+      limit : 10,
       order: [[Sequelize.literal("name"), "ASC"]],
     });
     return res.status(200).json({

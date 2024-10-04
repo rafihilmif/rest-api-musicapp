@@ -9,25 +9,13 @@ const multer = require("multer");
 const path = require("path");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
+const Joi = require("joi");
 
 const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: function name(req, file, cb) {
     cb(null, "./public/assets/image/shows");
-  },
-  fileFilter: function name(req, file, cb) {
-    if (
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/gif"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      cb(new Error("Only .png, .gif, .jpg and .jpeg format allowed!"));
-    }
   },
   filename: function name(req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -48,42 +36,88 @@ const storage = multer.diskStorage({
     });
   },
 });
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "image") {
+    const allowedImageTypes = ["image/png", "image/jpg", "image/jpeg"];
+    if (allowedImageTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      const error = new Error("Only .png, .jpg, and .jpeg formats are allowed for images!");
+      error.path = "file";
+      return cb(error);
+    }
+  }
+};
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+ });
 
-const upload = multer({ storage: storage });
 router.post(
   "/artist/shows/add",
   upload.single("image"),
   async function (req, res) {
     const { id } = req.query;
     let { name, date, location, contact, description, status } = req.body;
-    let { image } = req.file;
-
+    const { image } = req.file;
     const filePath = req.file.filename;
 
-    let newIdPrefix = "SWHS";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Shows.findAll({
+    const schema = Joi.object({
+    name: Joi.string().required(),
+    location: Joi.string().required(),
+    contact: Joi.string().allow(null),
+    date: Joi.date().required(),
+    description: Joi.string().required(),
+    status:Joi.number(),
+    });
+
+    try {
+      await schema.validateAsync(req.body);
+       let newIdPrefixShow = "SWHS";
+    let highestIdEntryShow = await Shows.findOne({
       where: {
         id_show: {
-          [Op.like]: keyword,
-        },
+          [Op.like]: `${newIdPrefixShow}%`
+        }
       },
+      order: [['id_show', 'DESC']]
     });
-    let newIdShows =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    await Shows.create({
-      id_show: newIdShows,
-      id_artist: id,
-      name: name,
-      duedate: date,
-      location: location,
-      contact: contact,
-      description: description,
-      image: filePath,
-      created_at: Date.now(),
-      status: status,
-    });
-    return res.status(201).send({ message: "shows berhasil ditambahkan" });
+    let newIdNumberShow = 1;
+    if (highestIdEntryShow) {
+      let highestIdShow = highestIdEntryShow.id_show;
+      let numericPartShow = highestIdShow.replace(newIdPrefixShow, ''); 
+      newIdNumberShow = parseInt(numericPartShow, 10) + 1;
+    }
+      let newIdShows = newIdPrefixShow + newIdNumberShow.toString().padStart(3, '0');
+      await Shows.create({
+        id_show: newIdShows,
+        id_artist: id,
+        name: name,
+        duedate: date,
+        location: location,
+        contact: contact,
+        description: description,
+        image: filePath,
+        created_at: Date.now(),
+        status: status,
+      });
+      return res.status(201).json({ message: "Successfully added show" });
+    } catch (error) {
+       if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+      
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+    }
   },
 );
 
