@@ -5,42 +5,67 @@ const { Op, Sequelize } = require("sequelize");
 const Genre = require("../../models/Genre");
 
 const router = express.Router();
+const Joi = require("joi");
 
 const checkGenre = async (name) => {
-  const checkGenreName = await Genre.findOne({
+  const dataCheck = await Genre.findOne({
     where: {
-      name: {
-        [Op.like]: name,
-      },
+      name: name
     },
   });
-  if (checkGenreName) {
-    throw new Error("genre can't be duplicated");
+  if (dataCheck) {
+    const error = new Error("Genre can't be duplicate");
+    error.path = "name"; 
+    throw error; 
   }
+  return name; 
 };
 router.post("/admin/genre/add", async function (req, res) {
   let { name } = req.body;
 
-  let newIdPrefix = "GNR";
-  let keyword = `%${newIdPrefix}%`;
-  let similiarUID = await Genre.findAll({
-    where: {
-      id_genre: {
-        [Op.like]: keyword,
-      },
-    },
+  const schema = Joi.object({
+    name: Joi.string().external(checkGenre).required(),
   });
-
-  let newIdGenre =
-    newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-  const newGenre = await Genre.create({
+  
+  try {
+     await schema.validateAsync(req.body);
+    let newIdPrefixGenre = "GNR";
+    let highestIdEntryGenre = await Genre.findOne({
+      where: {
+        id_genre: {
+          [Op.like]: `${newIdPrefixGenre}%`
+        }
+      },
+      order: [['id_genre', 'DESC']]
+    });
+    let newIdNumberGenre = 1;
+    if (highestIdEntryGenre) {
+      let highestIdGenre = highestIdEntryGenre.id_genre;
+      let numericPartGenre = highestIdGenre.replace(newIdPrefixGenre, ''); 
+      newIdNumberGenre = parseInt(numericPartGenre, 10) + 1;
+    }
+  let newIdGenre = newIdPrefixGenre + newIdNumberGenre.toString().padStart(3, '0');
+  await Genre.create({
     id_genre: newIdGenre,
     name: name,
     created_at: Date.now(),
   });
-  return res
-    .status(201)
-    .send({ message: "genre " + name + " berhasil ditambahkan" });
+    return res.status(201).json({message:"Successfully added genre"});
+  } catch (error) {
+    if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+  }
 });
 router.get("/admin/choose/genre", async function (req, res) {
   try {

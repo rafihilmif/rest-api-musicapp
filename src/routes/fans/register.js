@@ -89,8 +89,7 @@ router.post("/register/fans", async function (req, res) {
       newIdNumberPlan = parseInt(numericPartPlan, 10) + 1;
     }
     let newIdPlan = newIdPrefixPlan + newIdNumberPlan.toString().padStart(3, '0');
-   try {
-     await Plan.create({
+    await Plan.create({
        id_plan: newIdPlan,
        id_fans: newIdFans,
        status: 1,
@@ -101,7 +100,7 @@ router.post("/register/fans", async function (req, res) {
        created_at: Date.now()
      });
    
-     await Fans.create({
+     const data = await Fans.create({
        id_fans: newIdFans,
        email: email,
        password: passwordHash,
@@ -115,11 +114,11 @@ router.post("/register/fans", async function (req, res) {
        avatar: null,
        created_at: Date.now(),
        status: 1,
-     })
-     return res.status(201).json({message:"Successfully register as Fans"});
-    } catch (error) {
-     return res.status(400).send("Failed to register" + error);
-  }
+     });
+      return res.status(201).json({
+        message: "Successfully register as Fans",
+        data : data
+     });
   } catch (error) {
       if (error.isJoi) {
       return res.status(400).json({

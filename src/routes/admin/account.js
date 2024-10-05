@@ -10,63 +10,93 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const Plan = require("../../models/Plan");
 
 const router = express.Router();
 
-const checkEmail = async (email) => {
-  const artistEmail = await Artist.findOne({
+const checkEmailFans = async (email) => {
+  const dataCheck = await Fans.findOne({
     where: {
       email: {
         [Op.like]: email,
       },
     },
   });
-  const fansEmail = await Fans.findOne({
+  if (dataCheck) {
+    const error = new Error("Email already taken");
+    error.path = "email"; 
+    throw error; 
+  }
+  return email; 
+};
+
+const checkUsernameFans = async (username) => {
+  const dataCheck = await Fans.findOne({
+    where: {
+      username: {
+        [Op.like]: username,
+      },
+    },
+  });
+  if ( dataCheck) {
+    const error = new Error("Username already taken");
+    error.path = "username"; 
+    throw error; 
+  }
+  return username; 
+};
+
+const checkEmailArtist = async (email) => {
+  const dataCheck = await Artist.findOne({
     where: {
       email: {
         [Op.like]: email,
       },
     },
   });
-  if (artistEmail || fansEmail) {
-    throw new Error("email has been taken");
+  if (dataCheck) {
+    const error = new Error("Email already taken");
+    error.path = "email"; 
+    throw error; 
   }
+  return email; 
 };
-const checkUsername = async (username) => {
-  const artistUsername = await Artist.findOne({
+
+const checkUsernameArtist = async (username) => {
+  const dataCheck = await Artist.findOne({
     where: {
       username: {
         [Op.like]: username,
       },
     },
   });
-  const fansUsername = await Fans.findOne({
+  if (dataCheck) {
+    const error = new Error("Username already taken");
+    error.path = "username"; 
+    throw error; 
+  }
+  return username; 
+};
+
+const checkNameArtist = async (name) => {
+  const dataCheck = await Artist.findOne({
     where: {
-      username: {
-        [Op.like]: username,
+      name: {
+        [Op.like]: name,
       },
     },
   });
-  if (artistUsername || fansUsername) {
-    throw new Error("username has been taken");
+  if (dataCheck) {
+    const error = new Error("name already taken");
+    error.path = "name"; 
+    throw error; 
   }
+  return name; 
 };
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "./public/assets/image/avatar");
-  },
-  fileFilter: function name(req, file, cb) {
-    if (
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/gif"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      cb(new Error("Only .png, .gif, .jpg and .jpeg format allowed!"));
-    }
   },
   filename: function name(req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -77,18 +107,28 @@ const storage = multer.diskStorage({
       const fullFilePath = path.join("assets", "image", "avatar", fileName);
       file.stream.on("end", () => {
         fs.unlink(fullFilePath, (err) => {
-          console.log(fullFilePath);
-          if (err) {
-            throw err;
-          }
+          console.error("Error deleting file on abort:", err);
         });
       });
       file.stream.emit("end");
     });
   },
 });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true); 
+  } else {
+    const error = new Error("Only .png, .jpg, and .jpeg formats are allowed!");
+    error.path = "file";
+    return cb(error);
+  }
+};
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+ });
 
 router.post(
   "/admin/artist/add",
@@ -98,50 +138,63 @@ router.post(
     const filePath = req.file.filename;
 
     const schema = Joi.object({
-      email: Joi.string()
-        .external(checkEmail)
-        .email({ minDomainSegments: 2, tlds: { allow: ["com"] } })
-        .required(),
-      username: Joi.string().external(checkUsername).required(),
-      genre: Joi.string().required(),
-      name: Joi.string().required(),
-      password: Joi.string().required(),
-      formed: Joi.string().required(),
+    email: Joi.string().external(checkEmailArtist).email({ minDomainSegments: 2, tlds: { allow: ["com"] } }).required(),
+    name: Joi.string().min(4).external(checkNameArtist).required(),
+    username: Joi.string().min(4).external(checkUsernameArtist).pattern(new RegExp('^[a-z0-9]+$')).required(),
+    genre: Joi.string().required(),
+    password: Joi.string().min(6).pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required(),
+    formed: Joi.string().required(),
     });
-    let newIdPrefix = "ART";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Artist.findAll({
+   
+    try {
+    await schema.validateAsync(req.body);
+    let newIdPrefixArtist = "ART";
+    let highestIdEntryArtist = await Artist.findOne({
       where: {
         id_artist: {
-          [Op.like]: keyword,
-        },
+          [Op.like]: `${newIdPrefixArtist}%`
+        }
       },
+      order: [[ 'id_artist', 'DESC' ]] 
     });
-    try {
-      await schema.validateAsync(req.body);
-    } catch (error) {
-      return res.status(400).send(error.toString());
+    let newIdNumberArtist = 1;
+    if (highestIdEntryArtist) {
+      let highestIdArtist = highestIdEntryArtist.id_artist;
+      let numericPartArtist = highestIdArtist.replace(newIdPrefixArtist, ''); 
+      newIdNumberArtist = parseInt(numericPartArtist, 10) + 1;
     }
-    let newIdArtist =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    const passwordHash = bcrypt.hashSync(password, 10);
-    Artist.create({
-      id_artist: newIdArtist,
-      email: email,
-      name: name,
-      password: passwordHash,
-      username: username,
-      formed: formed,
-      genre: genre,
-      role: "artist",
-      description: null,
-      avatar: filePath,
-      created_at: Date.now(),
-      status: 1,
-    });
-    return res.status(201).send({
-      message: "berhasil menambahkan akun",
-    });
+  let newIdArtist = newIdPrefixArtist + newIdNumberArtist.toString().padStart(3, '0');
+      const passwordHash = bcrypt.hashSync(password, 10);
+      Artist.create({
+        id_artist: newIdArtist,
+        email: email,
+        name: name,
+        password: passwordHash,
+        username: username,
+        formed: formed,
+        genre: genre,
+        role: "artist",
+        description: null,
+        avatar: filePath,
+        created_at: Date.now(),
+        status: 1,
+      });
+      return res.status(201).json({message:"Successfully add account Artist"});
+    } catch (error) {
+      if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+    }
   },
 );
 
@@ -214,45 +267,6 @@ router.put("/admin/artist", upload.single("image"), async function (req, res) {
     return res.status(400).send("Gagal merubah data");
   }
 });
-router.put("/admin/artist/remove/avatar", async function (req, res) {
-  const { id } = req.query;
-
-  const pathAvatar = await Artist.findAll({
-    where: {
-      id_artist: {
-        [Op.like]: id,
-      },
-    },
-  });
-  let tempPathAvatar = null;
-  pathAvatar.forEach((element) => {
-    tempPathAvatar = element.avatar;
-  });
-  try {
-    await Artist.update(
-      {
-        avatar: null,
-      },
-      {
-        where: {
-          id_artist: {
-            [Op.like]: id,
-          },
-        },
-      },
-    );
-    const fullFilePath = "./public/assets/image/avatar/" + tempPathAvatar;
-    fs.unlink(fullFilePath, (err) => {
-      if (err) {
-        console.error("Error deleting the image:", err);
-        return res.status(500).json({ message: "Error deleting the image" });
-      }
-      res.status(200).json({ message: "Image deleted successfully" });
-    });
-  } catch (error) {
-    return res.status(400).send("Gagal menghapus avatar");
-  }
-});
 router.get("/admin/choose/artist", async function (req, res) {
   try {
     const data = await Artist.findAll();
@@ -267,36 +281,38 @@ router.post(
   async function (req, res) {
     let { first_name, last_name, email, username, password, gender, birth } =
       req.body;
+    
     const filePath = req.file.filename;
 
     const schema = Joi.object({
+      email: Joi.string().external(checkEmailFans).email({ minDomainSegments: 2, tlds: { allow: ["com"] } }).required(),
+      password: Joi.string().min(6).pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required(),
+      username: Joi.string().min(4).external(checkUsernameFans).pattern(new RegExp('^[a-z0-9]+$')).required(),
       first_name: Joi.string().required(),
       last_name: Joi.string().required(),
-      email: Joi.string()
-        .external(checkEmail)
-        .email({ minDomainSegments: 2, tlds: { allow: ["com"] } })
-        .required(),
-      username: Joi.string().external(checkUsername).required(),
       gender: Joi.string().required(),
-      password: Joi.string().required(),
-      birth: Joi.string().required(),
+      birth: Joi.date().required(),
     });
-    let newIdPrefix = "FNS";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Fans.findAll({
-      where: {
-        id_fans: {
-          [Op.like]: keyword,
-        },
-      },
-    });
+
     try {
       await schema.validateAsync(req.body);
-    } catch (error) {
-      return res.status(400).send(error.toString());
+      let newIdPrefixFans = "FNS";
+      let highestIdEntryFans = await Fans.findOne({
+      where: {
+        id_fans: {
+          [Op.like]: `${newIdPrefixFans}%`
+        }
+      },
+      order: [[ 'id_fans', 'DESC' ]] 
+    });
+    let newIdNumberFans = 1;
+    if (highestIdEntryFans) {
+      let highestIdFans = highestIdEntryFans.id_fans;
+      let numericPartFans = highestIdFans.replace(newIdPrefixFans, ''); 
+      newIdNumberFans = parseInt(numericPartFans, 10) + 1;
     }
-    let newIdFans =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
+    let newIdFans = newIdPrefixFans + newIdNumberFans.toString().padStart(3, '0');
+    
     const passwordHash = bcrypt.hashSync(password, 10);
     Fans.create({
       id_fans: newIdFans,
@@ -313,9 +329,49 @@ router.post(
       created_at: Date.now(),
       status: 1,
     });
-    return res.status(201).send({
-      message: "berhasil menambahkan akun",
+    let newIdPrefixPlan = "PLN";
+    let highestIdEntryPlan = await Plan.findOne({
+      where: {
+        id_plan: {
+          [Op.like]: `${newIdPrefixPlan}%`
+        }
+      },
+      order: [[ 'id_plan', 'DESC' ]] 
     });
+    let newIdNumberPlan = 1;
+    if (highestIdEntryPlan) {
+      let highestIdPlan = highestIdEntryPlan.id_plan;
+      let numericPartPlan = highestIdPlan.replace(newIdPrefixPlan, ''); 
+      newIdNumberPlan = parseInt(numericPartPlan, 10) + 1;
+    }
+    let newIdPlan = newIdPrefixPlan + newIdNumberPlan.toString().padStart(3, '0');
+    await Plan.create({
+       id_plan: newIdPlan,
+       id_fans: newIdFans,
+       status: 1,
+       type: 'free',
+       start: Date.now(),
+       expired: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000),
+       limit_listening: 5,
+       created_at: Date.now()
+     });
+     return res.status(201).json({message:"Successfully add account Fans"});
+    } catch (error) {
+      if (error.isJoi) {
+      return res.status(400).json({
+        message: error.details[0].message, 
+        path: error.details[0].path[0],   
+      });
+      }else if (error.path) {
+      return res.status(400).json({
+        message: error.message,
+        path: error.path,
+      });
+    } else {
+      return res.status(400).json({ message: error.message });
+    }
+    }
+    
   },
 );
 router.get("/admin/fans", async function (req, res) {
@@ -350,46 +406,6 @@ router.get("/admin/fan", async function (req, res) {
     return res.status(200).send(data);
   } catch (error) {
     return res.status(404).send("Data tidak ditemukan");
-  }
-});
-router.put("/admin/fan/remove/avatar", async function (req, res) {
-  const { id } = req.query;
-
-  const pathAvatar = await Fans.findAll({
-    where: {
-      id_fans: {
-        [Op.like]: id,
-      },
-    },
-  });
-  let tempPathAvatar = null;
-  pathAvatar.forEach((element) => {
-    tempPathAvatar = element.avatar;
-  });
-
-  try {
-    const removeImage = await Fans.update(
-      {
-        avatar: null,
-      },
-      {
-        where: {
-          id_fans: {
-            [Op.like]: id,
-          },
-        },
-      },
-    );
-    const fullFilePath = "./public/assets/image/avatar/" + tempPathAvatar;
-    fs.unlink(fullFilePath, (err) => {
-      if (err) {
-        console.error("Error deleting the image:", err);
-        return res.status(500).json({ message: "Error deleting the image" });
-      }
-      res.status(200).json({ message: "Image deleted successfully" });
-    });
-  } catch (error) {
-    return res.status(400).send("Gagal menghapus avatar");
   }
 });
 router.put("/admin/fan", upload.single("image"), async function (req, res) {

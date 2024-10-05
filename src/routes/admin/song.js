@@ -11,33 +11,68 @@ const fs = require("fs");
 const Artist = require("../../models/Artist");
 
 const router = express.Router();
+const Joi = require("joi");
 
 const storage = multer.diskStorage({
-  destination: function name(req, file, cb) {
+  destination: function (req, file, cb) {
     if (file.fieldname === "image") {
       cb(null, "./public/assets/image/song");
-    }
-    if (file.fieldname === "audio") {
+    } else if (file.fieldname === "audio") {
       cb(null, "./public/assets/audio");
     }
   },
-  filename: function name(req, file, cb) {
-    if (file.fieldname === "image") {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(
-        null,
-        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
-      );
-    }
-    if (file.fieldname === "audio") {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(
-        null,
-        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
-      );
-    }
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const fileName = file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname);
+    cb(null, fileName);
+    
+    req.on("aborted", () => {
+      let fullFilePath;
+      if (file.fieldname === "image") {
+        fullFilePath = path.join("public", "assets", "image", "song", fileName);
+      } else if (file.fieldname === "audio") {
+        fullFilePath = path.join("public", "assets", "audio", fileName);
+      }
+      
+      file.stream.on("end", () => {
+        fs.unlink(fullFilePath, (err) => {
+          if (err) console.error("Error deleting file on abort:", err);
+        });
+      });
+      file.stream.emit("end");
+    });
   },
 });
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === "image") {
+    const allowedImageTypes = ["image/png", "image/jpg", "image/jpeg"];
+    if (allowedImageTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      const error = new Error("Only .png, .jpg, and .jpeg formats are allowed for images!");
+      error.path = "file";
+      return cb(error);
+    }
+  } else if (file.fieldname === "audio") {
+    const allowedAudioTypes = ["audio/mpeg"];
+    if (allowedAudioTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      const error = new Error("Only .mp3 formats are allowed for audio!");
+      error.path = "fileimage";
+      return cb(error);
+    }
+  } else {
+    const error = new Error("Unexpected file field!");
+    error.path = "fileaudio";
+    return cb(error);
+  }
+};
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter
+ });
+
 
 router.get("/admin/choose/album", async function (req, res) {
   let { id} = req.query;
@@ -50,7 +85,6 @@ router.get("/admin/choose/album", async function (req, res) {
   return res.status(200).json(data);
 });
 
-const upload = multer({ storage: storage });
 router.post(
   "/admin/song/add",
   upload.fields([
@@ -68,19 +102,37 @@ router.post(
       req.body;
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
-
-    let newIdPrefix = "SNGS";
-    let keyword = `%${newIdPrefix}%`;
-    let similiarUID = await Song.findAll({
-      where: {
-        id_song: {
-          [Op.like]: keyword,
-        },
-      },
+    console.log(album);
+    const schema = Joi.object({
+      id_artist: Joi.string().required(),
+      album: Joi.string().allow(null),
+      name: Joi.string().required(),
+      genre: Joi.string().required(),
+      release_date: Joi.date().required(),
+      credit: Joi.string().allow(null),
+      lyric: Joi.string().allow(null),
+      status: Joi.number()
     });
-    let newIdSong =
-      newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-    const dataAlbum = await Album.findAll({
+    
+    try {
+      await schema.validateAsync(req.body);
+      let newIdPrefixSong = "SNGS";
+      let highestIdEntrySong = await Song.findOne({
+        where: {
+          id_song: {
+            [Op.like]: `${newIdPrefixSong}%`
+          }
+        },
+        order: [['id_song', 'DESC']]
+      });
+      let newIdNumberSong = 1;
+      if (highestIdEntrySong) {
+        let highestIdSong = highestIdEntrySong.id_song;
+        let numericPartSong = highestIdSong.replace(newIdPrefixSong, '');
+        newIdNumberSong = parseInt(numericPartSong, 10) + 1;
+      }
+      let newIdSong = newIdPrefixSong + newIdNumberSong.toString().padStart(3, '0');
+       const dataAlbum = await Album.findAll({
       where: {
         name: {
           [Op.like]: album,
@@ -91,13 +143,13 @@ router.post(
     dataAlbum.forEach((element) => {
       idAlbum = element.id_album;
     });
-    if (dataAlbum == null) {
-      await Song.create({
+      if (album === "-") {
+        await Song.create({
         id_song: newIdSong,
         id_artist: id_artist,
         id_album: null,
         name: name,
-        album: "-",
+        album: null,
         genre: genre,
         release_date: release_date,
         credit: credit,
@@ -107,24 +159,39 @@ router.post(
         created_at: Date.now(),
         status: 1,
       });
-      return res.status(200).send({ message: "track berhasil ditambahkan" });
-    } else if (dataAlbum != null) {
-      await Song.create({
-        id_song: newIdSong,
-        id_artist: id_artist,
-        id_album: idAlbum,
-        name: name,
-        album: album,
-        genre: genre,
-        release_date: release_date,
-        credit: credit,
-        lyric: lyric,
-        image: graphicFile.filename,
-        audio: audioFile.filename,
-        created_at: Date.now(),
-        status: 1,
-      });
-      return res.status(200).send({ message: "track berhasil ditambahkan" });
+      }
+      else {
+        await Song.create({
+          id_song: newIdSong,
+          id_artist: id_artist,
+          id_album: idAlbum,
+          name: name,
+          album: album,
+          genre: genre,
+          release_date: release_date,
+          credit: credit,
+          lyric: lyric,
+          image: graphicFile.filename,
+          audio: audioFile.filename,
+          created_at: Date.now(),
+          status: 1,
+        });
+      }
+      return res.status(201).json({ message: "Successfully added song" });
+    } catch (error) {
+      if (error.isJoi) {
+        return res.status(400).json({
+          message: error.details[0].message,
+          path: error.details[0].path[0],
+        });
+      } else if (error.path) {
+        return res.status(400).json({
+          message: error.message,
+          path: error.path,
+        });
+      } else {
+        return res.status(400).json({ message: error.message });
+      }
     }
   },
 );

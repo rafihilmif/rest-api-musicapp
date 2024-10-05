@@ -32,7 +32,7 @@ Song.init(
     },
     album: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
     },
     genre: {
       type: DataTypes.STRING(255),

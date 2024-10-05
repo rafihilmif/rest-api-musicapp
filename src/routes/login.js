@@ -124,8 +124,7 @@ router.post("/auth/login", async function (req, res) {
       email: email,
     },
   });
-
-  
+ 
   if (existArtist.length > 0) {
     const dataArtist = await Artist.findAll({
       where: {
@@ -151,9 +150,7 @@ router.post("/auth/login", async function (req, res) {
       });
       return res.status(200).json(user);
     } else {
-      return res.status(400).send({
-        message: "Password was incorrect",
-      });
+      return res.status(400).json("Password was incorrect");
     }
     } 
   }

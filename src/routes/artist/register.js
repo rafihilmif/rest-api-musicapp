@@ -70,8 +70,8 @@ router.post("/register/artist", async function (req, res) {
       .options({ messages: { "any.only": "password does not match" } }),
   });
     try {
-      await schema.validateAsync(req.body);
-      let newIdPrefixArtist = "ART";
+    await schema.validateAsync(req.body);
+    let newIdPrefixArtist = "ART";
     let highestIdEntryArtist = await Artist.findOne({
       where: {
         id_artist: {
@@ -82,13 +82,13 @@ router.post("/register/artist", async function (req, res) {
     });
     let newIdNumberArtist = 1;
     if (highestIdEntryArtist) {
-      let highestIdArtist = highestIdEntryArtist.id_fans;
+      let highestIdArtist = highestIdEntryArtist.id_artist;
       let numericPartArtist = highestIdArtist.replace(newIdPrefixArtist, ''); 
       newIdNumberArtist = parseInt(numericPartArtist, 10) + 1;
     }
   let newIdArtist = newIdPrefixArtist + newIdNumberArtist.toString().padStart(3, '0');
   const passwordHash = bcrypt.hashSync(password, 10);
-  await Artist.create({
+  const data = await Artist.create({
     id_artist: newIdArtist,
     email: email,
     name: name,
@@ -102,9 +102,11 @@ router.post("/register/artist", async function (req, res) {
     created_at: Date.now(),
     status: 1,
   });
-  return res.status(201).send({
-    message: "berhasil register",
-  });
+      return res.status(201).json({
+        message: "Successfully register as Artist",
+        // data: data
+       },
+  );
   } catch (error) {
     if (error.isJoi) {
       return res.status(400).json({

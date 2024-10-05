@@ -90,7 +90,7 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
     }
     let newIdMerchandise = newIdPrefixMerch + newIdNumberMerch.toString().padStart(3, '0');
 
-    await Merch.create({
+    const data = await Merch.create({
       id_merchandise: newIdMerchandise,
       id_artist: id,
       name: name,
@@ -114,7 +114,10 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
       number: number,
     }));
     await ImageMerch.bulkCreate(imageEntries);
-    return res.status(201).json({message:"Successfully added merchandise"});
+    return res.status(201).json({
+      message: "Successfully added merchandise",
+      data: data
+    });
   } catch (error) {
     if (error.isJoi) {
       return res.status(400).json({
