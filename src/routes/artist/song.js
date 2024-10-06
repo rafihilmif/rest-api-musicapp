@@ -131,7 +131,7 @@ router.post(
       idAlbum = element.id_album;
     });
       if (album === "-") {
-      await Song.create({
+      const data = await Song.create({
         id_song: newIdSong,
         id_artist: id,
         id_album: null,
@@ -146,9 +146,13 @@ router.post(
         created_at: Date.now(),
         status: status,
       });
+        return res.status(201).json({
+      message: "Successfully added song",
+      data: data
+    });
       }
       else {
-        await Song.create({
+       const data = await Song.create({
         id_song: newIdSong,
         id_artist: id,
         id_album: idAlbum,
@@ -162,9 +166,13 @@ router.post(
         audio: audioFile.filename,
         created_at: Date.now(),
         status: status,
-      });
+       });
+        return res.status(201).json({
+      message: "Successfully added song",
+      data: data
+    });
       }
-    return res.status(201).json({message:"Successfully added song"});
+    
     } catch (error) {
        if (error.isJoi) {
       return res.status(400).json({
@@ -333,12 +341,6 @@ router.put("/artist/song/update", upload.fields([
       if (!song) {
         return res.status(404).send("Data tidak ditemukan");
       }
-
-      const artist = await Artist.findByPk(song.id_artist);
-      if (!artist) {
-        return res.status(404).send('Artist not found');
-      }
-
       const saveNewUpdateData = {};
       Object.keys(newData).forEach((key) => {
         if (newData[key] !== undefined) {
@@ -351,85 +353,28 @@ router.put("/artist/song/update", upload.fields([
         fs.unlink(oldFilePath, (err) => {
           if (err) {
             console.error("Error deleting the old image:", err);
+            return res.status(500).send("Error deleting the old image");
           }
         });
-
-        const watermarkFolderPath = './public/assets/image/watermark';
-        const songFolderPath = './public/assets/image/song';
-        const originalFilename = req.files["image"][0].filename;
-        const pathInWatermarkFolder = path.join(watermarkFolderPath, originalFilename);
-        const finalPathInSongFolder = path.join(songFolderPath, originalFilename);
-
-        fs.mkdir(watermarkFolderPath, { recursive: true }, (err) => {
+        saveNewUpdateData.image = req.files["image"][0].filename;
+      }
+      if (req.files["audio"]) {
+        const oldFilePath = "./public/assets/audio/" + song.audio;
+        fs.unlink(oldFilePath, (err) => {
           if (err) {
-            console.error('Error creating watermark folder:', err);
-            return res.status(500).send({ message: "Error processing image" });
+            console.error("Error deleting the old audio:", err);
+            return res.status(500).send("Error deleting the old image");
           }
-
-          fs.rename(req.files["image"][0].path, pathInWatermarkFolder, (err) => {
-            if (err) {
-              console.error('Error moving file to watermark folder:', err);
-              return res.status(500).send({ message: "Error processing image" });
-            }
-
-            sharp(pathInWatermarkFolder)
-              .composite([
-                {
-                  input: {
-                    text: {
-                      text: `copyright © ${artist.name}`,
-                      fontSize: 10,
-                      rgba: true,
-                        fill: { r: 255, g: 255, b: 255, alpha: 0.5 }
-                    }
-                  },
-                  gravity: 'southeast'
-                }
-              ])
-              .toFile(finalPathInSongFolder, (err) => {
-                if (err) {
-                  console.error('Error processing final image:', err);
-                  return res.status(500).send({ message: "Error processing image" });
-                }
-
-                fs.unlink(pathInWatermarkFolder, (err) => {
-                  if (err) {
-                    console.error('Error deleting file from watermark folder:', err);
-                  }
-                  saveNewUpdateData.image = originalFilename;
-                  updateSongData();
-                });
-              });
-          });
         });
-      } else {
-        updateSongData();
+        saveNewUpdateData.audio = req.files["audio"][0].filename;
       }
-
-      function updateSongData() {
-        if (req.files["audio"]) {
-          const oldFilePath = "./public/assets/audio/" + song.audio;
-          fs.unlink(oldFilePath, (err) => {
-            if (err) {
-              console.error("Error deleting the old audio:", err);
-            }
-          });
-          saveNewUpdateData.audio = req.files["audio"][0].filename;
-        }
-
-        song.update(saveNewUpdateData)
-          .then(() => {
-            res.status(200).send("Data berhasil diubah");
-          })
-          .catch((error) => {
-            console.error("Error updating song data:", error);
-            res.status(400).send("Gagal merubah data");
-          });
-      }
-
+      const data = await song.update(saveNewUpdateData);
+      return res.status(200).json({
+        message: "Successfully to update data",
+        data: data
+      });
     } catch (error) {
-      console.error("Error updating data:", error);
-      return res.status(400).send("Gagal merubah data");
+      return res.status(400).send("Failed to update song");
     }
 });
 module.exports = router;

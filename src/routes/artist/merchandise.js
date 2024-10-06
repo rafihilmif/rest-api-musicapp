@@ -484,7 +484,10 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
         );
       }
     }
-    return res.status(200).send('Data successfully updated');
+    return res.status(200).json({
+      message: "Data successfully updated",
+      data: newData
+    });
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');

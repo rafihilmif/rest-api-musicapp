@@ -27,7 +27,7 @@ router.post('/reported', async function (req, res) {
             },
         });
     let newIdReport = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, "0");
-        await Reported.create({
+     const data = await Reported.create({
             id_report: newIdReport,
             id_user: idUser,
             id_artist: idArtist,
@@ -35,7 +35,10 @@ router.post('/reported', async function (req, res) {
             comment: comment,
             created_at: Date.now(),
         });
-        return res.status(200).json('Report has been added');
+        return res.status(200).json({
+            message: "Report has been recorded by user" + idUser + " to artist " + idArtist,
+            data: data
+        });
     } catch (error) {
          console.error('Error submit reported:', error);
     }
