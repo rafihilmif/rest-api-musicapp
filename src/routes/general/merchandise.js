@@ -394,7 +394,9 @@ router.get("/related/merchandise", async function (req, res) {
     where: {
       id_merchandise: {
       [Op.notLike]: id
-      }
+        }
+        ,
+      status: 1
     },
     order: Sequelize.literal('RAND()'),
     limit: 10
@@ -418,7 +420,8 @@ router.get("/result/merchandise", async function (req, res) {
           where: {
             name: {
               [Op.like]: `%${name}%`
-            }
+            },
+            status: 1
           }
         }
       ],
@@ -435,6 +438,8 @@ router.get("/result/merchandise", async function (req, res) {
             name: {
               [Op.notLike]: `%${name}%`
             }
+            ,
+            status: 1
           }
         }
       ],

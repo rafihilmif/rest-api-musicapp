@@ -15,6 +15,9 @@ router.get("/albums", async function (req, res) {
 
   try {
     const { rows, count } = await Album.findAndCountAll({
+      where: {
+      status: 1
+    }},{
       limit,
       offset,
       order: [[Sequelize.literal(`id_album`), "ASC"]],
@@ -41,6 +44,7 @@ router.get("/album", async function (req, res) {
         id_album: {
           [Op.like]: id,
         },
+        status : 1
       },
       include: [
         {
@@ -64,6 +68,7 @@ router.get("/collection/album", async function (req, res) {
       const { rows, count } = await Album.findAndCountAll({
       where: {
         id_artist: id,
+        status : 1
       },
       include: [
         {
@@ -87,7 +92,8 @@ router.get("/collection/album", async function (req, res) {
     else {
       const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+          id_artist: id,
+        status : 1
       },
       include: [
         {
@@ -122,7 +128,8 @@ router.get("/collection/album/sort/new", async function (req, res) {
     if (!page && !pageSize) {
       const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+          id_artist: id,
+        status : 1
       },
       include: [
         {
@@ -146,7 +153,8 @@ router.get("/collection/album/sort/new", async function (req, res) {
     else {
       const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+          id_artist: id,
+        status : 1
       },
       include: [
         {
@@ -182,6 +190,7 @@ router.get("/collection/album/sort/old", async function (req, res) {
       const { rows, count } = await Album.findAndCountAll({
       where: {
         id_artist: id,
+        status : 1
       },
       include: [
         {
@@ -233,7 +242,6 @@ router.get("/collection/album/sort/old", async function (req, res) {
 });
 router.get("/album/song", async function (req, res) {
   const { id } = req.query;
-  
   try {
     const data = await Song.findAll({
       where: {
@@ -268,10 +276,10 @@ router.get("/album/genre", async function (req, res) {
           where: {
             genre: {
               [Op.like] : name
-            }
+            },
+             status: 1
           }
         },
-        
       ],
     order: Sequelize.literal('RAND()'),
     limit: 6
@@ -352,7 +360,8 @@ router.get("/result/album", async function (req, res) {
           where: {
             name: {
               [Op.like]: `%${name}%`
-            }
+            },
+            status: 1
           }
         }
       ],
@@ -368,7 +377,8 @@ router.get("/result/album", async function (req, res) {
           where: {
             name: {
               [Op.notLike]: `%${name}%`
-            }
+            },
+             status: 1
           }
         }
       ],

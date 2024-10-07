@@ -14,7 +14,9 @@ router.get("/songs", async function (req, res) {
   const offset = (page - 1) * limit || 0;
 
   try {
-    const { rows, count } = await Song.findAndCountAll({
+    const { rows, count } = await Song.findAndCountAll({where:{
+      status: 1
+    }},{
       limit,
       offset,
       order: [[Sequelize.literal(`id_song`), "ASC"]],
@@ -23,6 +25,7 @@ router.get("/songs", async function (req, res) {
           model: Artist,
           attributes: ["name"],
         },
+       
       ],
     });
     return res.status(200).json({
@@ -230,7 +233,8 @@ router.get("/result/top/song", async function (req, res) {
             where: {
               name: {
                 [Op.like]: `%${name}%`
-              }
+              },
+              status: 1
             }
           },
         ],

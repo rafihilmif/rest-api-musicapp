@@ -9,6 +9,9 @@ const router = express.Router();
 router.get("/artists", async function (req, res) {
   try {
     const data = await Artist.findAll({
+      where: {
+      status: 1
+    }},{
     limit : 6,
     order: Sequelize.literal('RAND()'),
     });
@@ -43,7 +46,8 @@ router.get("/result/top/artist", async function (req, res) {
       where: {
         name: {
           [Op.like]: `%${name}%`
-        }
+        },
+        status: 1
       }
     });
     return res.status(200).json(data);
@@ -61,7 +65,8 @@ router.get("/result/artist", async function (req, res) {
       where: {
         name: {
           [Op.like]: `%${name}%`
-        }
+        },
+        status: 1
       }
     });
  
@@ -69,7 +74,8 @@ router.get("/result/artist", async function (req, res) {
       where: {
         name: {
           [Op.notLike]: `%${name}%`
-        }
+        },
+        status: 1
       },
       order: Sequelize.literal('RAND()'),
       limit: 7

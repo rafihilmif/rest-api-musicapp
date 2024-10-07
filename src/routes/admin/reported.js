@@ -8,6 +8,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const Artist = require("../../models/Artist");
+const Shows = require("../../models/Shows");
+const Merchandise = require("../../models/Merch");
+const Album = require("../../models/Album");
+const Playlist = require("../../models/Playlist");
+const Song = require("../../models/Song");
 
 const router = express.Router();
 
@@ -52,9 +57,32 @@ router.put("/admin/block", async function (req, res) {
   try {
     await Artist.update({ status: 0 }, {
       where: {
-        id_artist: {
-          [Op.like] : id
-        }
+        id_artist: id
+      }
+    });
+    await Song.update({ status: 0 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Shows.update({ status: 0 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Merchandise.update({ status: 0 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Album.update({ status: 0 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Playlist.update({ status: 0 }, {
+      where: {
+        id_artist: id
       }
     });
     return res.status(200).json("Artist has been block");
@@ -68,9 +96,32 @@ router.put("/admin/unblock", async function (req, res) {
   try {
     await Artist.update({ status: 1 }, {
       where: {
-        id_artist: {
-          [Op.like]: id
-        }
+        id_artist: id
+      }
+    });
+    await Song.update({ status: 1 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Shows.update({ status: 1 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Merchandise.update({ status: 1 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Album.update({ status: 1 }, {
+      where: {
+        id_artist: id
+      }
+    });
+    await Playlist.update({ status: 1 }, {
+      where: {
+        id_artist: id
       }
     });
     return res.status(200).json("Artist was unblock");
