@@ -108,8 +108,11 @@ router.put("/account/artist", upload.single("image"), async function (req, res) 
       saveNewUpdateData.avatar = req.file.filename;
     }
 
-    await artist.update(saveNewUpdateData);
-    return res.status(200).send("Data successfully updated");
+    const data = await artist.update(saveNewUpdateData);
+    return res.status(200).json({
+      message: "Data successfully update",
+      data: data
+    });
   } catch (error) {
     console.error("Error updating data:", error);
     return res.status(400).send("Gagal merubah data");

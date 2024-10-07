@@ -122,7 +122,7 @@ router.post('/fans/order', async function (req, res) {
     const transaction = await snap.createTransaction(transactionDetails);
     const snapToken = transaction.token;
 
-    await Ordered.create({
+    const data = await Ordered.create({
       id_order: newIdOrderPayment,
       id_fans: id,
       email: email,
@@ -277,7 +277,7 @@ router.post('/fans/order', async function (req, res) {
       }
     });
     
-    res.status(200).json({ token: snapToken });
+    res.status(200).json({ token: snapToken});
   } catch (error) {
     console.error('Midtrans transaction error:', error);
     res.status(500).json({ error: 'Failed to create transaction' });

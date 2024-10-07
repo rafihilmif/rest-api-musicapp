@@ -250,13 +250,16 @@ router.post('/user/add/song/playlist', async function (req, res) {
       newIdNumber = parseInt(numericPart, 10) + 1;
     }
     let newIdPlaylistSong = newIdPrefix + newIdNumber.toString().padStart(3, '0');
-    await PlaylistSong.create({
+    const data = await PlaylistSong.create({
       id_playlist_song: newIdPlaylistSong,
       id_playlist: idPlaylist,
       id_song: idSong
     });
 
-    return res.status(200).json({ message: 'Song added to playlist successfully' });
+    return res.status(200).json({
+      message: 'Song added to playlist successfully',
+      data: data
+     });
   } catch (error) {
     console.error('Error adding song to playlist:', error);
     return res.status(500).json({ message: 'Error adding song to playlist' });
@@ -275,7 +278,7 @@ router.get('/playlist/song', async function (req, res) {
       include: [
         {
           model: Song,
-          attributes: ['id_song', 'name', 'image'],
+          attributes: ['id_song', 'name', 'image', 'audio'],
           include: [
             {
               model: Artist,

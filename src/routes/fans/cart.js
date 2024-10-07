@@ -149,7 +149,10 @@ router.post("/fans/cart", async function (req, res) {
                 created_at: Date.now(),
             });
     }
-    res.status(200).send(cartItem);
+        res.status(200).json({
+        message: "Successfully add merchandise to cart", 
+        data: cartItem
+    });
     } catch (error) {
         res.status(400).send('gagal menambahkan cart') ;
     }

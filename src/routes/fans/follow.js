@@ -32,13 +32,16 @@ router.post("/follow", async function (req, res) {
       newIdNumber = parseInt(numericPart, 10) + 1;
     }
     let newIdFollow = newIdPrefix + newIdNumber.toString().padStart(3, '0');
-    await Follow.create({
+    const data = await Follow.create({
         id_follow: newIdFollow,
         id_fans: idFans,
         id_artist: idArtist,
         created_at: Date.now(),
     });
-        res.status(200).json('Successfully follow');
+        res.status(200).json({
+            message: "Fans " + idFans + " Successfully follow " + idArtist,
+            data: data
+        });
     } catch (error) {
         return res.status(400).send('Failed follow');
     }

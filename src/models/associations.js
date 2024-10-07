@@ -30,7 +30,6 @@ module.exports = function () {
   Merch.belongsTo(Artist, { foreignKey: "id_artist" });
   Shows.belongsTo(Artist, { foreignKey: "id_artist" });
   Song.belongsTo(Artist, { foreignKey: "id_artist" });
-  Song.belongsTo(Artist, { foreignKey: "id_artist" });
 
   Merch.belongsTo(Category, { foreignKey: "category" });
   Merch.hasMany(ImageMerch, CartItem, OrderedItem, TransactionItem ,{ foreignKey: "id_merchandise" });

@@ -233,15 +233,26 @@ router.get("/collection/album/sort/old", async function (req, res) {
 });
 router.get("/album/song", async function (req, res) {
   const { id } = req.query;
+  
   try {
     const data = await Song.findAll({
       where: {
         id_album: {
           [Op.like]: id,
-        },
+        }, 
       },
+     include: [
+        {
+          model: Artist,
+          attributes: ["id_artist", "name"]
+        },
+      ],
     });
-    return res.status(200).json(data);
+    const totalSongs = data.length;
+    return res.status(200).json({
+      totalSongs,
+      songs: data
+    });
   } catch (error) {
     return res.status(400).send("gagal memuat data");
   }
