@@ -113,7 +113,7 @@ router.post(
       lyric: Joi.string().allow(null),
       status: Joi.number()
     });
-    
+      
     try {
       await schema.validateAsync(req.body);
       let newIdPrefixSong = "SNGS";
@@ -147,9 +147,9 @@ router.post(
         await Song.create({
         id_song: newIdSong,
         id_artist: id_artist,
-        id_album: null,
+        id_album: "-",
         name: name,
-        album: null,
+        album: "-",
         genre: genre,
         release_date: release_date,
         credit: credit,
@@ -212,7 +212,7 @@ router.get("/admin/songs", async function (req, res) {
         },
            {
           model: Album,
-          attributes: ["name", "image"],
+          attributes: ["id_album","name", "image"],
         },
       ],
     });

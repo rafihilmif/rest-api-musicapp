@@ -134,9 +134,9 @@ router.post(
       const data = await Song.create({
         id_song: newIdSong,
         id_artist: id,
-        id_album: null,
+        id_album: "-",
         name: name,
-        album: null,
+        album: "-",
         genre: genre,
         release_date: release_date,
         credit: credit,
