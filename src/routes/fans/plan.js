@@ -96,7 +96,7 @@ router.post('/plan/payment', async function (req, res) {
 
 router.get("/plan/payment", async function (req, res) {
   const { id, page, pageSize} = req.query;
-  const limit = pageSize || 18;
+  const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;
    
   try {
@@ -191,5 +191,17 @@ router.get("/plan/confirm/payment", async function (req, res) {
     res.status(500).json({ error: err.message });
   }
 });
-
+router.get("/fans/plan/detail", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Plan.findOne({
+      where: {
+        id_fans: id
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Cannot find plan");
+  }
+});
 module.exports = router;

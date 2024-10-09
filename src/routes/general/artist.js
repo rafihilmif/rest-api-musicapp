@@ -10,14 +10,14 @@ router.get("/artists", async function (req, res) {
   try {
     const data = await Artist.findAll({
       where: {
-      status: 1
-    }},{
-    limit : 6,
-    order: Sequelize.literal('RAND()'),
+        status: 1
+      },
+      limit: 6,
+      order: Sequelize.literal('RAND()')
     });
     return res.status(200).json(data);
   } catch (err) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send("Failed to get data artist");
   }
 });
 
