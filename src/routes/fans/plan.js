@@ -128,7 +128,7 @@ router.get("/fans/detail/plan/payment", async function (req, res) {
     });
     return res.status(200).json(data);
   } catch (error) {
-    res.status(400).json({ error: 'Failed to get tplan payment' });
+    res.status(400).json({ error: 'Failed to get plan payment' });
   }
 });
 router.get("/plan/confirm/payment", async function (req, res) {
