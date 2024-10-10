@@ -52,7 +52,7 @@ router.get("/artist/detail/transaction", async function (req, res) {
 });
 router.get("/artist/item/transaction", async function (req, res) {
     const { id } = req.query;
-     
+
     try {       
         const data = await TransactionItem.findAll({
             where: {
@@ -77,7 +77,85 @@ router.get("/artist/item/transaction", async function (req, res) {
         });
     res.status(200).json(data);
     } catch (error) {
-        return res.status(400).send('gagal memuat data cart');
+        return res.status(400).send('Failed to get item transaction');
+    }
+});
+router.get("/artist/merchandise/sales", async function (req, res) {
+    const { id } = req.query;
+    try {
+        const data = await Merch.findAll({
+            where: {
+                id_artist: id
+            },
+            include: [
+            
+                {
+                    model: TransactionItem,
+                    attributes: []
+                }
+            ],
+            attributes: [
+                'id_merchandise',
+                'name',
+                'price',
+                [Sequelize.fn('COALESCE', Sequelize.fn('SUM', Sequelize.col('TransactionItems.qty')), 0), 'totalSold']
+            ],
+            group: ['id_merchandise', 'name', 'price'],
+            raw: true,
+            nest: true,
+        });
+
+        const formattedData = data.map(item => ({
+            id_merchandise: item.id_merchandise,
+            name: item.name,
+            price: item.price,
+            totalSold: parseInt(item.totalSold) || 0,
+            totalRevenue: (item.price * (parseInt(item.totalSold) || 0))
+        }));
+
+        return res.status(200).json(formattedData);
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(400).json("Failed to get each merchandise sales");
+    }
+});
+router.get("/artist/total/revenue", async function (req, res) {
+    const { id } = req.query;
+
+    try {
+        const data = await Transaction.sum('total', {
+            where: {
+                id_artist: id
+            }
+        });
+        return res.status(200).json(data);
+    } catch (error) {
+        return res.status(400).json("Failed to get total revenue");
+    }
+});
+router.get("/artist/total/merchandise/sales", async function (req, res) {
+    const { id } = req.query;
+
+    try {
+        const data = await Transaction.findAll({
+            where: {
+                id_artist: id
+            },
+            include: [{
+                model: TransactionItem,
+                attributes: []
+            }],
+            attributes: [
+                [Sequelize.fn('SUM', Sequelize.col('TransactionItems.qty')), 'totalQuantity']
+            ],
+            raw: true
+        });
+
+        const totalQty = data[0].totalQuantity || 0;
+        return res.status(200).json(totalQty);
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(400).json("Failed to get total merchandise sales");
     }
 });
 module.exports = router;

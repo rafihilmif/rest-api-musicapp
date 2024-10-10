@@ -506,7 +506,20 @@ router.get("/artist/merchandise", async function (req, res) {
     });
     return res.status(200).json(data);
   } catch (err) {
-    return res.status(400).send("gagal memuat data");
+     return res.status(400).send("Failed to get data merch");
+  }
+});
+router.get("/artist/total/merchadise", async function (req, res) {
+  const { id } = req.query;
+  try {
+    const data = await Merch.count({
+      where: {
+        id_artist : id
+      }
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send("Failed to get total data merch");
   }
 });
 module.exports = router;
