@@ -238,4 +238,30 @@ router.put("/artist/show/update", upload.single('image'), async function (req, r
     return res.status(400).send('Failed to update data');
   }
 });
+router.delete("/artist/show/delete", async function (req, res) {
+  const { id } = req.query;
+
+  const data = await Shows.findOne({
+    where: {
+      id_show: id
+    }
+  });
+  try {
+    const oldFilePath = "./public/assets/image/shows/" + data.image;
+    fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+    await Shows.destroy({
+      where: {
+        id_show: id
+      }
+    });
+    return res.status(200).json("Successfully deleted show");
+  } catch (error) {
+    return res.status(400).json("Failed to delete show");
+  }
+});
 module.exports = router;

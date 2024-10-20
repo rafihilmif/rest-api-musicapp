@@ -118,4 +118,5 @@ router.put("/account/artist", upload.single("image"), async function (req, res) 
     return res.status(400).send("Gagal merubah data");
   }
 });
+
 module.exports = router;

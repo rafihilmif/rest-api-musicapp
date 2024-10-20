@@ -88,4 +88,23 @@ router.get("/result/artist", async function (req, res) {
   }
 });
 
+router.get("/discover/artist/genre", async function (req, res) {
+  const { id, name } = req.query;
+
+  try {
+    const data = await Artist.findAll({
+      where: {
+        id_artist: {
+          [Op.notLike]: id
+        },
+        genre: name
+      },
+      limit: 7,
+      order: Sequelize.literal('RAND()'),
+    });
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get data artist");
+  }
+});
 module.exports = router;

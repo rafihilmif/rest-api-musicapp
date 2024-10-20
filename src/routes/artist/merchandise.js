@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const ImageMerch = require("../../models/ImageMerch");
+const CartItem = require("../../models/CartItem");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require('fs').promises;
 
@@ -520,6 +521,48 @@ router.get("/artist/total/merchadise", async function (req, res) {
     return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send("Failed to get total data merch");
+  }
+});
+router.delete("/artist/merchandise/delete", async function (req, res) {
+  const { id } = req.query;
+
+  const dataImage = await ImageMerch.findAll({
+    where: {
+      id_merchandise: id
+    }
+  });
+  try {
+    await CartItem.destroy({
+      where: {
+        id_merchandise: id
+      }
+    });
+    
+    const imageDeletion = dataImage.map(async (image) => {
+      const oldFilePath = "./public/assets/image/merchandise/" + image.name;
+       fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+    });
+    await Promise.all(imageDeletion);
+
+     await Merch.destroy({
+      where: {
+        id_merchandise: id
+      }
+     });
+    
+    await ImageMerch.destroy({
+      where: {
+        id_merchandise: id
+      }
+    });
+    return res.status(200).json("Successfully deleted merchandise");
+  } catch (error) {
+    return res.status(400).json("Failed to delete merchandise");
   }
 });
 module.exports = router;

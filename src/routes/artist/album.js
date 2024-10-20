@@ -11,6 +11,7 @@ const path = require("path");
 const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
 const Joi = require("joi");
+const Song = require("../../models/Song");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -288,6 +289,46 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');
+  }
+});
+router.delete("/artist/album/delete", async function (req, res) {
+  const { id } = req.query;
+  
+  const data = await Album.findOne(
+    {
+      where: {
+        id_album: id
+      }
+    }
+  );
+
+  try {
+    await Song.update(
+      {
+        id_album: "-",
+        album: "-"
+      }
+      ,
+      {
+        where: {
+          id_album: id,
+        }
+      });
+    const oldFilePath = "./public/assets/image/album/" + data.image;
+    fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+    await Album.destroy({
+      where: {
+        id_album: id
+      }
+    });
+    return res.status(200).json("Album has been deleted");
+  } catch (error) {
+    return res.status(400).json("Failed to delete album");
   }
 });
 
