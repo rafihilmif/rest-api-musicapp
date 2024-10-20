@@ -55,7 +55,10 @@ router.get("/merchandises", async function (req, res) {
        include: 
         {
           model: Artist,
-          attributes: ["name"],
+         attributes: ["name"],
+         where: {
+            status: 1
+          }
         },
      });
     return res.status(200).json(data);
@@ -397,7 +400,13 @@ router.get("/related/merchandise", async function (req, res) {
         }
         ,
       status: 1
-    },
+      },
+      include: {
+        model: Artist,
+        where: {
+          status: 1
+        },
+      },
     order: Sequelize.literal('RAND()'),
     limit: 10
     });
@@ -468,7 +477,10 @@ router.get("/discover/artist/merchandise", async function (req, res) {
        include: 
         {
           model: Artist,
-          attributes: ["name"],
+         attributes: ["name"],
+         where: {
+            status: 1
+          }
         },
        limit: 5,
        order: Sequelize.literal('RAND()'),

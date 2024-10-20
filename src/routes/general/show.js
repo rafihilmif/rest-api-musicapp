@@ -128,7 +128,13 @@ router.get("/result/show", async function (req, res) {
         name: {
           [Op.like]: `%${name}%`
         }
-      }
+      },
+      include: {
+        model: Artist,
+        where: {
+          status: 1
+        },
+      },
     });
  
     const otherShows = await Shows.findAll({
@@ -136,6 +142,12 @@ router.get("/result/show", async function (req, res) {
         name: {
           [Op.notLike]: `%${name}%`
         }
+      },
+      include: {
+        model: Artist,
+        where: {
+          status: 1
+        },
       },
       order: Sequelize.literal('RAND()'),
       limit: 5

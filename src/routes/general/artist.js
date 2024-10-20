@@ -97,7 +97,8 @@ router.get("/discover/artist/genre", async function (req, res) {
         id_artist: {
           [Op.notLike]: id
         },
-        genre: name
+        genre: name,
+        status: 1
       },
       limit: 7,
       order: Sequelize.literal('RAND()'),

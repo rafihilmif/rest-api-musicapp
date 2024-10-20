@@ -393,4 +393,32 @@ router.get("/result/album", async function (req, res) {
     return res.status(400).send(error);
   }
 });
+
+router.get("/discover/artist/album", async function (req, res) {
+  const { id} = req.query;
+  try {
+   const data = await Album.findAll({
+      where: {
+        id_artist: {
+           [Op.notLike] : id
+        },
+     },
+      include: [
+        {
+          model: Artist,
+          attributes: ["name"],
+          where: {
+             status: 1
+          }
+        }
+      ],
+       limit: 5,
+       order: Sequelize.literal('RAND()'),
+     });
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).send("Failed to get data");
+  }
+});
+
 module.exports = router;
