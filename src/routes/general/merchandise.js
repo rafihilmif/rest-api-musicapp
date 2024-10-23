@@ -370,7 +370,7 @@ router.get("/category", async function (req, res) {
     return res.status(200).json(data);
     }
   } catch (error) {
-    return res.status(400).json('gagal memuat data category');
+    return res.status(400).json('Failed to get data merchandise');
   }
 });
 router.get("/detail/merchandise", async function (req, res) {
@@ -378,14 +378,12 @@ router.get("/detail/merchandise", async function (req, res) {
   try {
     const data = await Merch.findOne({
       where: {
-        id_merchandise: {
-          [Op.like]: id,
-        },
+        id_merchandise: id
       },
     });
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(400).send("gagal memuat data detail merchandise");
+    return res.status(400).send("Failed to get data merchandise");
   }
 });
 
