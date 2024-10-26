@@ -4,13 +4,22 @@ const { Op, Sequelize } = require("sequelize");
 
 const Fans = require("../../models/Fans");
 const Artist = require("../../models/Artist");
+const Plan = require("../../models/Plan");
+const Playlist = require("../../models/Playlist");
+const Cart = require("../../models/Cart");
+const CartItem = require("../../models/CartItem");
+const PlaylistSong = require("../../models/PlaylistSong");
+const Album = require("../../models/Album");
+const Merch = require("../../models/Merch");
 
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const Plan = require("../../models/Plan");
+const ImageMerch = require("../../models/ImageMerch");
+const Song = require("../../models/Song");
+const Shows = require("../../models/Shows");
 
 const router = express.Router();
 
@@ -441,6 +450,302 @@ router.put("/admin/fan", upload.single("image"), async function (req, res) {
     await fan.update(saveNewUpdateData);
   } catch (error) {
     return res.status(400).send("Gagal merubah data");
+  }
+});
+router.put("/admin/fans/block", async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    await Fans.update({ status: 0 }, {
+      where: {
+        id_fans: id
+      }
+    });
+  
+    await Playlist.update({ status: 0 }, {
+      where: {
+        id_user: id
+      }
+    });
+    return res.status(200).json("Fans has been block");
+  } catch (error) {
+    return res.status(400).send("Failed to block fans");
+  }
+});
+router.put("/admin/fans/unblock", async function (req, res) {
+  const { id } = req.query;
+
+  try {
+    await Fans.update({ status: 1 }, {
+      where: {
+        id_fans: id
+      }
+    });
+  
+    await Playlist.update({ status: 1 }, {
+      where: {
+        id_user: id
+      }
+    });
+    return res.status(200).json("Fans was unblock");
+  } catch (error) {
+    return res.status(400).send("Failed to unblock fans");
+  }
+});
+
+router.delete("/admin/fans/delete", async function (req, res) {
+  const { id } = req.query;
+  try {
+    if (!id) {
+      return res.status(400).json({ error: "Fans ID is required" });
+    }
+
+    const dataFans = await Fans.findOne({
+      where: {
+        id_fans: id
+      }
+    });
+
+    if (!dataFans) {
+      return res.status(404).json({ error: "Fans not found" });
+    }
+
+    const dataCart = await Cart.findOne({
+      where: {
+        id_fans: id
+      }
+    });
+
+    if (dataCart) {
+      await CartItem.destroy({
+        where: {
+          id_cart: dataCart.id_cart
+        }
+      });
+      
+      await Cart.destroy({
+        where: {
+          id_fans: id
+        }
+      });
+    }
+
+    const dataPlaylist = await Playlist.findAll({
+      where: { id_user: id }
+    });
+
+    for (const playlist of dataPlaylist) {
+      await PlaylistSong.destroy({
+        where: { id_playlist: playlist.id_playlist }
+      });
+      
+      const oldFileImage = "./public/assets/image/playlist/" + playlist.image;
+
+      fs.unlink(oldFileImage, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+      await Playlist.destroy({
+        where: { id_user: id }
+      });
+    }
+
+    await Plan.destroy({
+      where: {
+        id_fans: id
+      }
+    });
+
+    if (dataFans.avatar) {
+      const oldFilePath = "./public/assets/image/avatar/" + dataFans.avatar;
+      fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting fan avatar:", err);
+        }
+      });
+    }
+
+    await Fans.destroy({
+      where: {
+        id_fans: id
+      }
+    });
+
+    return res.status(200).json({ 
+      success: true,
+      message: "Successfully deleted fans" 
+    });
+
+  } catch (error) {
+    console.error("Error in fans deletion:", error);
+    return res.status(500).json({ 
+      success: false,
+      error: "Failed to delete fans",
+      details: error.message 
+    });
+  }
+});
+
+router.delete("/admin/artist/delete", async function (req, res) {
+   const { id } = req.query;
+  try {
+   
+    if (!id) {
+      return res.status(400).json({ error: "Artist ID is required" });
+    }
+
+    const dataArtist = await Artist.findOne({
+      where: { id_artist: id }
+    });
+
+    if (!dataArtist) {
+      return res.status(404).json({ error: "Artist not found" });
+    }
+
+    const dataPlaylist = await Playlist.findAll({
+      where: { id_user: id }
+    });
+
+    for (const playlist of dataPlaylist) {
+      await PlaylistSong.destroy({
+        where: { id_playlist: playlist.id_playlist }
+      });
+      
+      const oldFileImage = "./public/assets/image/song/" + playlist.image;
+
+      fs.unlink(oldFileImage, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+      await Playlist.destroy({
+        where: { id_user: id }
+      });
+    }
+
+    const dataMerchandise = await Merch.findAll({
+      where: { id_artist: id }
+    });
+
+    for (const merch of dataMerchandise) {
+      const dataImage = await ImageMerch.findAll({
+        where: { id_merchandise: merch.id_merchandise }
+      });
+      
+      const imageDeletion = dataImage.map(async (image) => {
+        const oldFilePath = "./public/assets/image/merchandise/" + image.name;
+        fs.unlink(oldFilePath, (err) => {
+          if (err) {
+            console.error("Error deleting the old image:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+      });
+      await Promise.all(imageDeletion);
+      
+      await ImageMerch.destroy({
+        where: { id_merchandise: merch.id_merchandise }
+      });
+    }
+    await Merch.destroy({
+      where: { id_artist: id }
+    });
+
+    const dataSong = await Song.findAll({
+      where: { id_artist: id }
+    });
+
+    if (dataSong.length > 0) {
+      await PlaylistSong.destroy({
+        where: {
+          id_song: {
+            [Op.in]: dataSong.map(song => song.id_song)
+          }
+        }
+      });
+
+      for (const song of dataSong) {
+        const oldFileSongPath = "./public/assets/audio/" + song.audio;
+        const oldFileImage = "./public/assets/image/song/" + song.image;
+
+        fs.unlink(oldFileSongPath, (err) => {
+          if (err) {
+            console.error("Error deleting the old audio:", err);
+            return res.status(500).send("Error deleting the old audio");
+          }
+        });
+        
+        fs.unlink(oldFileImage, (err) => {
+          if (err) {
+            console.error("Error deleting the old image:", err);
+            return res.status(500).send("Error deleting the old image");
+          }
+        });
+      }
+    }
+    
+    await Song.destroy({
+      where: { id_artist: id }
+    });
+
+    const dataAlbum = await Album.findAll({
+      where: { id_artist: id }
+    });
+
+    for (const album of dataAlbum) {
+      const oldFileImage = "./public/assets/image/album/" + album.image;
+      fs.unlink(oldFileImage, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+    }
+    
+    await Album.destroy({
+      where: { id_artist: id }
+    });
+
+    const dataShow = await Shows.findAll({
+      where: { id_artist: id }
+    });
+
+    for (const show of dataShow) {
+      const oldFileImage = "./public/assets/image/shows/" + show.image;
+      fs.unlink(oldFileImage, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+    }
+    
+    await Shows.destroy({
+      where: { id_artist: id }
+    });
+
+    if (dataArtist.avatar) {
+      const oldFilePath = "./public/assets/image/avatar/" + dataArtist.avatar;
+      fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+      });
+    }
+
+    await Artist.destroy({
+      where: { id_artist: id }
+    });
+
+    return res.status(200).json({ message: "Successfully deleted artist" });
+
+  } catch (error) {
+    console.error("Error in artist deletion:", error);
+    return res.status(500).json({ error: "Failed to delete artist" });
   }
 });
 module.exports = router;

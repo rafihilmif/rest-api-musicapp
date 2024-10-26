@@ -51,8 +51,8 @@ router.post(
 
     const filePath = req.file.filename;
 
+    try {
     const newIdPlaylist = uuidv4().replace(/-/g, '');
-
     await Playlist.create({
       id_playlist: newIdPlaylist,
       id_user: id,
@@ -61,11 +61,12 @@ router.post(
       created_at: Date.now(),
       status: 1,
     });
-    return res
-      .status(201)
-      .send({ message: "playlist berhasil " + name + " ditambahkan" });
-  },
-);
+    return res.status(201).json({ message: "Successfully added playlist " + name });
+    } catch (error) {
+      return res.status(400).json({ message: "Error added playlist" });
+    }
+    
+});
 router.get("/playlist", async function (req, res) {
     const { id } = req.query;
 
@@ -349,9 +350,9 @@ router.delete('/user/playlist', async function (req, res) {
         id_playlist: id
       }
     });
-    res.status(200).json({ message: 'Successfully removed playlist and associated songs' });
+    res.status(200).json({ message: 'Successfully removed playlist' });
   } catch (error) {
-    console.error('Error deleting playlist and associated songs:', error);
+    console.error('Error deleting playlist:', error);
     res.status(500).json({ message: 'An error occurred while removing the playlist' });
   }
 });

@@ -37,21 +37,20 @@ router.get("/admin/reported", async function (req, res) {
 });
 router.get("/admin/report", async function (req, res) {
   const {id} = req.query;
-  const data = await Reported.findOne({
+  try {
+      const data = await Reported.findOne({
       where: {
         id_report: {
           [Op.like] : id
         }
       }
     });
-  try {
-    
     return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send("Failed to get data reported");
   }
 });
-router.put("/admin/block", async function (req, res) {
+router.put("/admin/artist/block", async function (req, res) {
   const { id } = req.query;
 
   try {
@@ -82,7 +81,7 @@ router.put("/admin/block", async function (req, res) {
     });
     await Playlist.update({ status: 0 }, {
       where: {
-        id_artist: id
+        id_user: id
       }
     });
     return res.status(200).json("Artist has been block");
@@ -90,7 +89,7 @@ router.put("/admin/block", async function (req, res) {
     return res.status(400).send("Failed to block artist");
   }
 });
-router.put("/admin/unblock", async function (req, res) {
+router.put("/admin/artist/unblock", async function (req, res) {
   const { id } = req.query;
 
   try {
@@ -121,7 +120,7 @@ router.put("/admin/unblock", async function (req, res) {
     });
     await Playlist.update({ status: 1 }, {
       where: {
-        id_artist: id
+        id_user: id
       }
     });
     return res.status(200).json("Artist was unblock");

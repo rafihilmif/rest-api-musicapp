@@ -12,6 +12,7 @@ const Artist = require("../../models/Artist");
 
 const router = express.Router();
 const Joi = require("joi");
+const PlaylistSong = require("../../models/PlaylistSong");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -300,4 +301,49 @@ router.put(
     }
   },
 );
+
+router.delete("/admin/song/delete", async function (req, res) {
+  const { id } = req.query;
+
+   const data = await Song.findOne(
+    {
+      where: {
+        id_song: id
+      }
+    }
+  );
+
+  try {
+    await PlaylistSong.destroy(
+      {
+        where: {
+          id_song: id,
+        }
+      });
+    const oldFileSongPath = "./public/assets/audio/" + data.audio;
+    fs.unlink(oldFileSongPath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+    const oldFileImage = "./public/assets/image/song/" + data.image;
+    fs.unlink(oldFileImage, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+     await Song.destroy(
+      {
+        where: {
+          id_song: id,
+        }
+       });
+    return res.status(200).json("Successfully deleted song");
+  } catch (error) {
+    return res.status(400).send("Failed to deleted song");
+  }
+});
+
 module.exports = router;

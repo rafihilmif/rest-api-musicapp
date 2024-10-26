@@ -30,6 +30,9 @@ router.get("/fans/cart", async function (req, res) {
             include: [
                 {
                     model: Merch,
+                    where: {
+                        status: 1
+                    },
                     attributes: ['name', 'price'],
                     include: [{
                         model: ImageMerch,
@@ -89,7 +92,7 @@ router.post("/fans/cart", async function (req, res) {
     }
     const merch = await Merch.findByPk(id_merchandise);
     if (!merch) {
-        return res.status(404).json({ message: 'produk tidak ditemukan' });
+        return res.status(404).json({ message: 'Cannot find merchandise' });
     }
 
     let cartItem = await CartItem.findOne({
@@ -154,7 +157,7 @@ router.post("/fans/cart", async function (req, res) {
         data: cartItem
     });
     } catch (error) {
-        res.status(400).send('gagal menambahkan cart') ;
+        res.status(400).send('Failed to add merchandise to cart') ;
     }
 });
 router.put('/fans/cart', async function (req, res) {

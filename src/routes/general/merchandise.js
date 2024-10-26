@@ -91,6 +91,7 @@ router.get("/collection/merchandise", async function (req, res) {
       const { rows, count } = await Merch.findAndCountAll({
       where: {
         id_artist: id,
+        status: 1
       },
       include: [
         {

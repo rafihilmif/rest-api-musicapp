@@ -12,11 +12,12 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const ImageMerch = require("../../models/ImageMerch");
+const OrderedItem = require("../../models/OrderedItem");
 
 const router = express.Router();
 
 router.get("/admin/order", async function (req, res) {
-     const { page, pageSize } = req.query;
+  const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
   try {
@@ -80,6 +81,17 @@ router.get("/admin/item/order", async function (req, res) {
     res.status(200).json(data);
     } catch (error) {
         return res.status(400).json({ error: 'Failed to get item in ordeer' });
+    }
+});
+router.get("/admin/ordered/chart", async function (req, res) {
+    try {
+      const data = await Ordered.findAll({
+        where: {
+        status: "Settlement"
+      }});
+      return res.status(200).json(data);
+    } catch (error) {
+      return res.status(400).json("Failed to get")
     }
 });
 module.exports = router;

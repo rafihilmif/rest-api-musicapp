@@ -12,6 +12,7 @@ const path = require("path");
 const fs = require('fs').promises;
 const { func } = require("joi");
 const Joi = require("joi");
+const CartItem = require("../../models/CartItem");
 
 const router = express.Router();
 
@@ -416,6 +417,78 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');
+  }
+});
+
+router.delete("/admin/merchandise/delete", async function (req, res) {
+  const { id } = req.query;
+
+  const dataImage = await ImageMerch.findAll({
+    where: {
+      id_merchandise: id
+    }
+  });
+  try {
+    await CartItem.destroy({
+      where: {
+        id_merchandise: id
+      }
+    });
+    
+    const imageDeletion = dataImage.map(async (image) => {
+      const oldFilePath = "./public/assets/image/merchandise/" + image.name;
+       fs.unlink(oldFilePath, (err) => {
+        if (err) {
+          console.error("Error deleting the old image:", err);
+          return res.status(500).send("Error deleting the old image");
+        }
+    });
+    });
+    await Promise.all(imageDeletion);
+     await Merch.destroy({
+      where: {
+        id_merchandise: id
+      }
+     });
+    
+    await ImageMerch.destroy({
+      where: {
+        id_merchandise: id
+      }
+    });
+    return res.status(200).json("Successfully deleted merchandise");
+  } catch (error) {
+    return res.status(400).json("Failed to delete merchandise");
+  }
+});
+router.put("/admin/merchandise/hidden", async function (req, res) {
+  const { id } = req.query;
+  try {
+    await Merch.update(
+      { status: 0 }
+      , {
+        where: {
+          id_merchandise: id
+        }
+      });
+    return res.status(200).json("Successfully hidden merchandise");
+  } catch (error) {
+    return res.status(400).json("Failed to hidden merchandise");
+  }
+});
+router.put("/admin/merchandise/unhidden", async function (req, res) {
+  const { id } = req.query;
+  try {
+    await Merch.update(
+      { status: 1 }
+      , {
+        where: {
+          id_merchandise: id
+        }
+      });
+    return res.status(200).json("Successfully unhidden merchandise");
+  } catch (error) {
+    return res.status(400).json("Failed to unhidden merchandise");
   }
 });
 module.exports = router;
