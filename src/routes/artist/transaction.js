@@ -11,26 +11,55 @@ const Merch = require("../../models/Merch");
 const ImageMerch = require("../../models/ImageMerch");
 
 const router = express.Router();
+
 router.get("/artist/transaction", async function (req, res) {
-    const { id, pageSize, page } = req.query;
-    const limit = pageSize || 12;
+    const { id, pageSize, page, timeFilter } = req.query;
+    const limit = pageSize || 9;
     const offset = (page - 1) * limit || 0;
-   
-  try {
-      const { rows, count } = await Transaction.findAndCountAll({
-          where: {
-              id_artist: id,
-          },
-          limit,
-          offset,
-          order: [[Sequelize.literal(`created_at`), "ASC"]],
-      })
-      return res.status(200).json({
-          data: rows,
-          total: count,
-      })
+    
+    const currentDate = new Date();
+    let whereClause = {
+        id_artist: id
+    };
+
+    switch (timeFilter) {
+        case 'this month':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+                [Op.lte]: currentDate
+            };
+            break;
+        case 'last 3 months':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.setMonth(currentDate.getMonth() - 3)),
+                [Op.lte]: new Date()
+            };
+            break;
+        case 'last 6 months':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.setMonth(currentDate.getMonth() - 6)),
+                [Op.lte]: new Date()
+            };
+            break;   
+        default:
+            break;
+    }
+
+    try {
+        const { rows, count } = await Transaction.findAndCountAll({
+            where: whereClause,
+            limit,
+            offset,
+            order: [[Sequelize.literal('created_at'), 'ASC']],
+        });
+        
+        return res.status(200).json({
+            data: rows,
+            total: count,
+        });
     } catch (error) {
-    res.status(400).json({ error: 'Failed to get transaction' });
+        console.error('Transaction fetch error:', error);
+        res.status(400).json({ error: 'Failed to get transaction' });
     }
 });
 

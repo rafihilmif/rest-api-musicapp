@@ -471,7 +471,8 @@ router.get("/discover/artist/merchandise", async function (req, res) {
       where: {
         id_artist: {
            [Op.notLike] : id
-         }
+        },
+        status: 1
       },
        include: 
         {
@@ -487,7 +488,34 @@ router.get("/discover/artist/merchandise", async function (req, res) {
      });
     return res.status(200).json(data);
   } catch (err) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send("Failed to get data merchandise");
+  }
+});
+
+router.get("/genre/artist/merchandise", async function (req, res) {
+  const {name} = req.query;
+
+  try {
+    const data = await Merch.findAll({
+      where: {
+       status: 1
+      },
+       include: 
+        {
+          model: Artist,
+         attributes: ["name"],
+         where: {
+           status: 1,
+           genre: name
+          }
+        },
+       limit: 6,
+       order: Sequelize.literal('RAND()'),
+      
+     });
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).send("Failet to get data merchandise");
   }
 });
 

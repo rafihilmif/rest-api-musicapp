@@ -284,15 +284,41 @@ router.post('/fans/order', async function (req, res) {
   }
 });
 router.get("/fans/order", async function (req, res) {
-  const { id, page, pageSize} = req.query;
-  const limit = pageSize || 12;
+  const { id, page, pageSize, timeFilter} = req.query;
+  const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
-   
+  
+  const currentDate = new Date();
+    let whereClause = {
+        id_fans: id
+    };
+
+    switch (timeFilter) {
+        case 'this month':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+                [Op.lte]: currentDate
+            };
+            break;
+        case 'last 3 months':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.setMonth(currentDate.getMonth() - 3)),
+                [Op.lte]: new Date()
+            };
+            break;
+        case 'last 6 months':
+            whereClause.created_at = {
+                [Op.gte]: new Date(currentDate.setMonth(currentDate.getMonth() - 6)),
+                [Op.lte]: new Date()
+            };
+            break;   
+        default:
+            break;
+  }
+  
   try {
   const { rows, count } = await Ordered.findAndCountAll({
-      where: {
-        id_fans: id,
-      },
+      where: whereClause,
       limit,
       offset,
       order: [[Sequelize.literal(`created_at`), "ASC"]],
@@ -305,6 +331,7 @@ router.get("/fans/order", async function (req, res) {
     res.status(400).json({ error: 'Failed to get order' });
   }
 });
+
 router.get("/fans/detail/order", async function (req, res) {
   const { id } = req.query;
 

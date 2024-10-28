@@ -282,7 +282,7 @@ router.get("/album/genre", async function (req, res) {
         },
       ],
     order: Sequelize.literal('RAND()'),
-    limit: 6
+    limit: 5
     });
     return res.status(200).json(data);
   } catch (error) {
