@@ -13,6 +13,7 @@ const path = require("path");
 const fs = require("fs");
 const ImageMerch = require("../../models/ImageMerch");
 const OrderedItem = require("../../models/OrderedItem");
+const Artist = require("../../models/Artist");
 
 const router = express.Router();
 
@@ -93,5 +94,33 @@ router.get("/admin/ordered/chart", async function (req, res) {
     } catch (error) {
       return res.status(400).json("Failed to get")
     }
+});
+router.get("/admin/most/merchandise", async function (req, res) {
+  try {
+    const data= await OrderItem.findAll({
+      include: [
+        {
+          model: Merch,
+          attributes: ['name', 'category'],
+          include: [{
+            model: Artist,
+            attributes: ['name', 'avatar'],
+          }]
+        }
+      ],
+      attributes: [
+        'id_merchandise',
+        [Sequelize.fn('SUM', Sequelize.col('qty')), 'total_qty']
+      ],
+      group: ['id_merchandise'],
+      order: [[Sequelize.literal('total_qty'), 'DESC']],
+      limit: 10,
+      subQuery: false,
+    });
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get most sold merchandise");
+  }
 });
 module.exports = router;

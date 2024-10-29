@@ -491,4 +491,13 @@ router.put("/admin/merchandise/unhidden", async function (req, res) {
     return res.status(400).json("Failed to unhidden merchandise");
   }
 });
+router.get("/admin/total/merchandise", async function (req, res) {
+  try {
+    const total = await Merch.count();
+    return res.status(200).json(total);
+  } catch (error) {
+    return res.status(400).json("Failed to get total data merchandise");
+  }
+});
+
 module.exports = router;

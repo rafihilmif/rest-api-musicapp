@@ -17,6 +17,7 @@ const order = require("./routes/fans/order");
 const follow = require("./routes/fans/follow");
 const plan = require("./routes/fans/plan");
 
+const admin_login = require("./routes/admin/login");
 const admin_merch = require("./routes/admin/merchandise");
 const admin_genre = require("./routes/admin/genre");
 const admin_account = require("./routes/admin/account");
@@ -112,6 +113,7 @@ app.use("/api", admin_plan);
 app.use("/api", admin_transaction);
 app.use("/api", admin_order);
 app.use("/api", admin_reported);
+app.use("/api", admin_login);
 
 app.use("/api", login);
 app.use("/api", general_album);

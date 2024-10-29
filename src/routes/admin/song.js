@@ -346,4 +346,13 @@ router.delete("/admin/song/delete", async function (req, res) {
   }
 });
 
+router.get("/admin/total/song", async function (req, res) {
+  try {
+    const data = await Song.count();
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get data total song");
+  }
+});
+
 module.exports = router;

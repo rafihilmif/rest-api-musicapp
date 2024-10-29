@@ -748,4 +748,21 @@ router.delete("/admin/artist/delete", async function (req, res) {
     return res.status(500).json({ error: "Failed to delete artist" });
   }
 });
+
+router.get("/admin/account/fans/total", async function (req, res) {
+  try {
+    const total = await Fans.count();
+    res.status(200).json(total);
+  } catch (error) {
+    return res.status(400).json("Failed to get total data fans");
+  }
+});
+router.get("/admin/account/artist/total", async function (req, res) {
+  try {
+    const total = await Artist.count();
+    res.status(200).json(total);
+  } catch (error) {
+    return res.status(400).json("Failed to get total data artist");
+  }
+});
 module.exports = router;
