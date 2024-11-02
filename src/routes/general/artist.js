@@ -78,7 +78,7 @@ router.get("/result/artist", async function (req, res) {
         status: 1
       },
       order: Sequelize.literal('RAND()'),
-      limit: 7
+      limit: 5
     });
     
     const data = matchingArtist ? [matchingArtist, ...otherArtists] : otherArtists;
