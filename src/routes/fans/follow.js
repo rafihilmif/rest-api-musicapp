@@ -121,7 +121,8 @@ router.get("/fans/follow", async function (req, res) {
             for (const hasBeenFollow of artistFollowed) {
                 const artistData = await Artist.findOne({
                     where: {
-                        id_artist: hasBeenFollow.id_artist
+                        id_artist: hasBeenFollow.id_artist,
+                        status: 1
                     },
                     attributes: ["name", "avatar", "id_artist"],
                     

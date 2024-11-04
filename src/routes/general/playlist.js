@@ -282,13 +282,13 @@ router.get('/playlist/song', async function (req, res) {
       include: [
         {
           model: Song,
+          where: {
+            status: 1
+          },
           attributes: ['id_song', 'name', 'image', 'audio'],
           include: [
             {
               model: Artist,
-              where: {
-                status: 1
-              },
               attributes: ['name'], 
             }
           ]
