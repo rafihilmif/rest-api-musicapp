@@ -24,6 +24,7 @@ router.get("/collection/shows", async function (req, res) {
       const { rows, count } = await Shows.findAndCountAll({
       where: {
         id_artist: id,
+        status: 1
       },
       include: {
         model: Artist,
@@ -80,7 +81,8 @@ router.get("/collection/shows/sort/upcoming", async function (req, res) {
         id_artist: id,
         duedate: {
           [Op.gte]: new Date(), 
-        }
+        },
+        status: 1
       },
       include: {
         model: Artist,

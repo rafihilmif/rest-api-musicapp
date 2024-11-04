@@ -75,7 +75,8 @@ router.get("/playlist", async function (req, res) {
         const data = await Playlist.findAll({
             where: {
                 id_user: {
-                    [Op.notLike]: id
+                [Op.notLike]: id,
+                status: 1
             },
           },
           limit: 5,
@@ -116,7 +117,6 @@ router.get("/user/playlist", async function (req, res) {
 });
 router.get("/user/detail/playlist", async function (req, res) {
     const { id } = req.query;
-
     try {
         const data = await Playlist.findOne({
             where: {
@@ -217,6 +217,9 @@ router.get('/search/song/playlist', async function (req, res) {
       include: [
         {
           model: Artist,
+          where: {
+            status: 1
+          },
           attributes: ['name']
         }
       ],
@@ -511,7 +514,8 @@ router.get("/result/playlist", async function (req, res) {
      where: {
             name: {
               [Op.like]: `%${name}%`
-            }
+        },
+       status: 1
        },
       order: Sequelize.literal('RAND()'), 
       limit: 3
@@ -521,8 +525,9 @@ router.get("/result/playlist", async function (req, res) {
      where: {
             name: {
               [Op.notLike]: `%${name}%`
-            }
-       },
+        },
+       status: 1
+      },
       order: Sequelize.literal('RAND()'), 
       limit: 3 
     });
