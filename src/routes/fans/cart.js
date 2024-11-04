@@ -177,7 +177,7 @@ router.put('/fans/cart', async function (req, res) {
 
         let merch = await Merch.findOne({
             where: {
-                id_merchandise: cartItem.id_merchandise         
+                id_merchandise: cartItem.id_merchandise,
             }
         });
 

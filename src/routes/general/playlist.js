@@ -76,8 +76,8 @@ router.get("/playlist", async function (req, res) {
             where: {
                 id_user: {
                 [Op.notLike]: id,
-                status: 1
             },
+              status: 1
           },
           limit: 5,
           order: Sequelize.literal('RAND()'), 
@@ -98,7 +98,6 @@ router.get("/playlist", async function (req, res) {
 });
 router.get("/user/playlist", async function (req, res) {
     const { id } = req.query;
-
     try {
         const data = await Playlist.findAll({
             where: {
@@ -108,7 +107,6 @@ router.get("/user/playlist", async function (req, res) {
             },
             limit: 6
         });
-    
         return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send('Failed to search for merchandise');
