@@ -260,7 +260,7 @@ router.post('/user/add/song/playlist', async function (req, res) {
       id_song: idSong
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       message: 'Song added to playlist successfully',
       data: data
      });
