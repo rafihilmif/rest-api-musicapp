@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -49,31 +49,36 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get("/account/fans", async function (req, res) {
-  const dataAllFans = await Fans.findAll();
-  return res.status(200).send({
-    dataAllFans,
-  });
-});
 router.get("/detail/fans", async function (req, res) {
-  const { email } = req.query;
-  const data = await Fans.findOne({
-    where: {
-      email: {
-        [Op.like]: email,
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  try {
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    if (userdata.role != 'fans') {
+     return res.status(401).json({ message: 'you are not fans' });
+    }
+    const data = await Fans.findOne({
+      where: {
+        id_fans: userdata.id_fans,
       },
-    },
-    attributes: {
-      exclude: ["password", "created_at", "status"],
-    },
-  });
-  return res.status(200).json(data);
+      attributes: {
+        exclude: ["password", "created_at", "status"],
+      },
+    });
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(403).json({ message: 'Invalid token' });
+  }
 });
 
 router.put("/account/fan", upload.single("image"), async function (req, res) {
   const { email } = req.query;
   const { old_password, new_password, ...newData } = req.body;
-  console.log(new_password);
   try {
     const fan = await Fans.findOne({
       where: {

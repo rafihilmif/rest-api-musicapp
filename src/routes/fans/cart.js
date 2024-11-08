@@ -1,5 +1,5 @@
-const { response } = require("express");
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const { Op, Sequelize } = require("sequelize");
 const Fans = require("../../models/Fans");
 const Merch = require("../../models/Merch");
@@ -9,19 +9,23 @@ const ImageMerch = require("../../models/ImageMerch");
 const router = express.Router();
 
 router.get("/fans/cart", async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+    
     try {   
+         const userdata = jwt.verify(token, process.env.JWT_KEY);
             const cart = await Cart.findOne({
             where: {
-                id_fans: {
-                    [Op.like]: id
-                }
+                id_fans : userdata.id_fans
             }
         });
         if (!cart) {
             return res.status(400).json({ message: "Cart has been empty" });
         };
-    const cartItems = await CartItem.findAll({
+        const cartItems = await CartItem.findAll({
             where: {
                 id_cart: {
                     [Op.like]: cart.id_cart
@@ -43,21 +47,21 @@ router.get("/fans/cart", async function (req, res) {
                     }]
                 }
             ]
-    }); 
+        });
     
-    const totalCartItems = await CartItem.count({
+        const totalCartItems = await CartItem.count({
             distinct: true,
             col: 'id_cart_item',
             where: {
                 id_cart: cart.id_cart
             }
-    });
+        });
 
-     const totalQtyItems = await CartItem.sum('qty', {
+        const totalQtyItems = await CartItem.sum('qty', {
             where: {
                 id_cart: cart.id_cart
             }
-     });
+        });
     res.status(200).json({data: cartItems, totalItems: totalCartItems, totalQty: totalQtyItems});
     } catch (error) {
         return res.status(400).send('Failed to get data cart');
@@ -65,9 +69,17 @@ router.get("/fans/cart", async function (req, res) {
 });
 
 router.post("/fans/cart", async function (req, res) {
-    const { id_fans,id_merchandise, size, qty } = req.body; 
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const {id_merchandise, size, qty } = req.body; 
     
     try {
+        const userdata = jwt.verify(token, process.env.JWT_KEY);
+        
         if (!id_merchandise || !qty) {
         return res.status(400).json({ message: 'Product ID and quantity are required' });
     }
@@ -82,11 +94,11 @@ router.post("/fans/cart", async function (req, res) {
     });
     let newIdCart = newIdPrefix + (similiarUID.length + 1).toString().padStart(3, '0');
     
-    let cart = await Cart.findOne({ where: { id_fans: id_fans } });
+    let cart = await Cart.findOne({ where: { id_fans: userdata.id_fans } });
     if (!cart) {
         cart = await Cart.create({
             id_cart: newIdCart,
-            id_fans: id_fans,
+            id_fans: userdata.id_fans,
             created_at: Date.now(),
         });
     }
@@ -161,9 +173,16 @@ router.post("/fans/cart", async function (req, res) {
     }
 });
 router.put('/fans/cart', async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
     const { id } = req.query;
     const { qty } = req.body;
 
+    
     try {
         let cartItem = await CartItem.findOne({
             where: {
@@ -223,6 +242,12 @@ router.put('/fans/cart', async function (req, res) {
     }
 });
 router.delete("/fans/cart/item", async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
     const {id} = req.query;
 
     try {

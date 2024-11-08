@@ -57,6 +57,18 @@ Artist.init(
       type: DataTypes.BLOB("long"),
       allowNull: true,
     },
+     verify_token: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    is_verified: {
+      type: DataTypes.INTEGER(2),
+      allowNull: false
+    },
+    verify_token_expired: {
+      type: DataTypes.DATE(),
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE(),
     },

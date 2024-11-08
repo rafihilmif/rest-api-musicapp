@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
@@ -16,6 +17,7 @@ const coreClient = new midtransClient.CoreApi({
     serverKey: process.env.SERVER_KEY,
     clientKey: process.env.CLIENT_KEY
 });
+
 router.post("/fans/plan", async function (req, res) {
   const { id } = req.query;
    let newIdPrefixPlan = "PLN";
@@ -47,14 +49,21 @@ router.post("/fans/plan", async function (req, res) {
         return res.status(400).send("create plan" + error);
     }
 });
+
 router.post('/plan/payment', async function (req, res) {
-  const { id } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
   const { amount, types} = req.body; 
 
-  console.log(types);
   let dataFans = await Fans.findOne({
     where: {
-      id_fans: id
+      id_fans: userdata.id_fans
     }
   });
 
@@ -81,7 +90,7 @@ router.post('/plan/payment', async function (req, res) {
 
     await PlanPayment.create({
       id_plan_payment: newIdPlanPlayment,
-      id_fans: id,
+      id_fans: userdata.id_fans,
       status: "Pending",
       type : types,
       total: amount,
@@ -95,13 +104,21 @@ router.post('/plan/payment', async function (req, res) {
 });
 
 router.get("/plan/payment", async function (req, res) {
-  const { id, page, pageSize, timeFilter} = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const {page, pageSize, timeFilter} = req.query;
   const limit = pageSize || 12;
   const offset = (page - 1) * limit || 0;
   
   const currentDate = new Date();
     let whereClause = {
-        id_fans: id
+        id_fans: userdata.id_fans
     };
 
     switch (timeFilter) {
@@ -158,7 +175,15 @@ router.get("/fans/detail/plan/payment", async function (req, res) {
   }
 });
 router.get("/plan/confirm/payment", async function (req, res) {
-  const { idPlanPayment, idFans } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const { idPlanPayment} = req.query;
 
   try {
     const checkPayment = await PlanPayment.findOne({
@@ -208,7 +233,7 @@ router.get("/plan/confirm/payment", async function (req, res) {
         },
         {
           where: {
-            id_fans: idFans
+            id_fans: userdata.id_fans
           }
         }
       );
@@ -217,12 +242,20 @@ router.get("/plan/confirm/payment", async function (req, res) {
     res.status(500).json({ error: err.message });
   }
 });
+
 router.get("/fans/plan/detail", async function (req, res) {
-  const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
   try {
     const data = await Plan.findOne({
       where: {
-        id_fans: id
+        id_fans: userdata.id_fans
       }
     });
     return res.status(200).json(data);

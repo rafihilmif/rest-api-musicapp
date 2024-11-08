@@ -1,5 +1,5 @@
-const { response } = require("express");
-const {configs} = require("dotenv").config();
+
+const jwt = require("jsonwebtoken");
 const axios = require('axios');
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
@@ -91,14 +91,19 @@ router.get('/shipping/city', async function (req, res) {
     }
 });
 router.post('/fans/order', async function (req, res) {
-  const { id } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
   const { amount, address, courier, first_name, last_name, phone, email } = req.body; 
 
   const dataCart = await Cart.findOne({
     where: {
-      id_fans: {
-        [Op.like]: id
-      }
+     id_fans: userdata.id_fans
     }
   });
 
@@ -124,7 +129,7 @@ router.post('/fans/order', async function (req, res) {
 
     const data = await Ordered.create({
       id_order: newIdOrderPayment,
-      id_fans: id,
+      id_fans: userdata.id_fans,
       email: email,
       first_name: first_name,
       last_name: last_name,
@@ -272,7 +277,7 @@ router.post('/fans/order', async function (req, res) {
     await Cart.destroy({
       where: {
         id_fans: {
-          [Op.like]: id
+          [Op.like]: userdata.id_fans
         }
       }
     });
@@ -284,13 +289,21 @@ router.post('/fans/order', async function (req, res) {
   }
 });
 router.get("/fans/order", async function (req, res) {
-  const { id, page, pageSize, timeFilter} = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const {page, pageSize, timeFilter} = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
   
   const currentDate = new Date();
     let whereClause = {
-        id_fans: id
+        id_fans: userdata.id_fans
     };
 
     switch (timeFilter) {
@@ -379,7 +392,15 @@ router.get("/fans/item/order", async function (req, res) {
     }
 });
 router.get("/fans/order/confirm/payment", async function (req, res) {
-  const { idOrderPayment, idFans } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const { idOrderPayment} = req.query;
   try {
     const checkPayment = await Ordered.findOne({
       where: {
@@ -401,7 +422,7 @@ router.get("/fans/order/confirm/payment", async function (req, res) {
       {
         where: {
           id_order: checkPayment.id_order,
-          id_fans: idFans
+          id_fans: userdata.id_fans
         }
       }
     );

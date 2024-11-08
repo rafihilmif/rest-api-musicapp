@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize, Model } = require("sequelize");
 const Fans = require("../../models/Fans");
@@ -47,13 +47,21 @@ router.post("/follow", async function (req, res) {
     }
 });
 router.get("/follow/check", async function (req, res) {
-    const { idFans, idArtist } = req.query;
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+    const {idArtist } = req.query;
 
     try {
         const followRecord = await Follow.findOne({
             where: {
                 id_fans: {
-                    [Op.like]: idFans
+                    [Op.like]: userdata.id_fans
                 },
                 id_artist: {
                     [Op.like]: idArtist
@@ -104,12 +112,19 @@ router.delete("/unfollow", async function (req, res) {
     }
 });
 router.get("/fans/follow", async function (req, res) {
-    const { id } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
     try {
         const artistFollowed = await Follow.findAll({
             where: {
                 id_fans: {
-                    [Op.like]: id
+                    [Op.like]: userdata.id_fans
                 }
             },
             order: Sequelize.literal('RAND()'),
