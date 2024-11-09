@@ -1,4 +1,3 @@
-const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -8,7 +7,6 @@ const Album = require("../../models/Album");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
-const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
 const Joi = require("joi");
 const Song = require("../../models/Song");
@@ -43,7 +41,12 @@ router.post(
   "/artist/album/add",
   upload.single("image"),
   async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
     const { name, description, status } = req.body;
 
     const filePath = req.file.filename;
@@ -56,6 +59,8 @@ router.post(
     
     try {
       await schema.validateAsync(req.body);
+      const userdata = jwt.verify(token, process.env.JWT_KEY);
+
       let newIdPrefixAlbum = "ALBM";
       let highestIdEntryAlbum = await Album.findOne({
         where: {
@@ -75,7 +80,7 @@ router.post(
 
       await Album.create({
         id_album: newIdAlbum,
-        id_artist: id,
+        id_artist: userdata.id_artist,
         name: name,
         description: description,
         image: filePath,
@@ -102,23 +107,29 @@ router.post(
 );
 
 router.get("/artist/collection/album", async function (req, res) {
-  const { id, page, pageSize  } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const {page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
    const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+        id_artist: userdata.id_artist,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+            id_artist: userdata.id_artist
           },
         },
       ],
@@ -135,23 +146,29 @@ router.get("/artist/collection/album", async function (req, res) {
   }
 });
 router.get('/artist/collection/album/sort/new', async function (req, res) {
-  const { id, page, pageSize  } = req.query;
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const {page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
    try {
       const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+        id_artist: userdata.id_artist,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+            id_artist: userdata.id_artist,
           },
         },
       ],
@@ -168,23 +185,29 @@ router.get('/artist/collection/album/sort/new', async function (req, res) {
   }
 });
 router.get('/artist/collection/album/sort/old', async function (req, res) {
-  const { id, page, pageSize  } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  const {page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
     const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: id,
+        id_artist: userdata.id_artist,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+            id_artist: userdata.id_artist,
           },
         },
       ],
@@ -256,6 +279,12 @@ router.get("/artist/detail/album", async function (req, res) {
 });
 
 router.put("/artist/album/update", upload.single('image'), async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   const newData = req.body;
 
@@ -291,7 +320,14 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
     return res.status(400).send('Failed to update data');
   }
 });
+
 router.delete("/artist/album/delete", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   
   const data = await Album.findOne(

@@ -1,18 +1,20 @@
 const jwt = require("jsonwebtoken");
 const express = require("express");
-const { Op, Sequelize, Model } = require("sequelize");
-const Fans = require("../../models/Fans");
-
-const bcrypt = require("bcrypt");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { Op, Sequelize} = require("sequelize");
 const Follow = require("../../models/Follow");
 const Artist = require("../../models/Artist");
 const router = express.Router();
 
 router.post("/follow", async function (req, res) {
-    const { idFans, idArtist } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+  
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+    const {idArtist } = req.query;
     
     let newIdPrefix = "FLW";
 
@@ -34,24 +36,25 @@ router.post("/follow", async function (req, res) {
     let newIdFollow = newIdPrefix + newIdNumber.toString().padStart(3, '0');
     const data = await Follow.create({
         id_follow: newIdFollow,
-        id_fans: idFans,
+        id_fans: userdata.id_fans,
         id_artist: idArtist,
         created_at: Date.now(),
     });
         res.status(200).json({
-            message: "Fans " + idFans + " Successfully follow " + idArtist,
+            message: "Fans " + userdata.id_fans + " Successfully follow " + idArtist,
             data: data
         });
     } catch (error) {
         return res.status(400).send('Failed follow');
     }
 });
+
 router.get("/follow/check", async function (req, res) {
-     const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
   
-  if (!token) {
+    if (!token) {
         return res.status(401).json({ message: 'No token provided' });
-  }
+    }
   
     const userdata = jwt.verify(token, process.env.JWT_KEY);
     
@@ -60,12 +63,9 @@ router.get("/follow/check", async function (req, res) {
     try {
         const followRecord = await Follow.findOne({
             where: {
-                id_fans: {
-                    [Op.like]: userdata.id_fans
-                },
-                id_artist: {
-                    [Op.like]: idArtist
-                }
+                id_fans:  userdata.id_fans
+                ,
+                id_artist: idArtist
             }
         });
 
@@ -79,6 +79,7 @@ router.get("/follow/check", async function (req, res) {
         return res.status(500).json({ error: 'Server error' });
     }
 });
+
 router.get("/total/follower", async function (req, res) {
     const { id } = req.query;  
     try {
@@ -92,14 +93,23 @@ router.get("/total/follower", async function (req, res) {
         return res.status(500).json({ error: 'Server error' });
     }
 });
-router.delete("/unfollow", async function (req, res) {
-    const { idFans, idArtist } = req.query;
 
+router.delete("/unfollow", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+  
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+    const { idArtist } = req.query;
+    
     try {
         await Follow.destroy({
             where: {
                 id_fans: {
-                    [Op.like]: idFans
+                    [Op.like]: userdata.id_fans
                 },
                 id_artist: {
                     [Op.like]: idArtist
@@ -111,6 +121,7 @@ router.delete("/unfollow", async function (req, res) {
         return res.status(500).json({ error: 'Server error' });
     }
 });
+
 router.get("/fans/follow", async function (req, res) {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   

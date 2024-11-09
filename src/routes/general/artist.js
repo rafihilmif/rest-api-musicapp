@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -7,6 +7,12 @@ const { func } = require("joi");
 
 const router = express.Router();
 router.get("/artists", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   try {
     const data = await Artist.findAll({
       where: {
@@ -22,6 +28,12 @@ router.get("/artists", async function (req, res) {
 });
 
 router.get("/artist", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id} = req.query;
   try {
    
@@ -40,6 +52,12 @@ router.get("/artist", async function (req, res) {
 });
 
 router.get("/result/top/artist", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query;
   try {
     const data = await Artist.findOne({
@@ -57,6 +75,12 @@ router.get("/result/top/artist", async function (req, res) {
 });
 
 router.get("/result/artist", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query;
   
   try {
@@ -89,6 +113,12 @@ router.get("/result/artist", async function (req, res) {
 });
 
 router.get("/discover/artist/genre", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, name } = req.query;
 
   try {
@@ -108,7 +138,14 @@ router.get("/discover/artist/genre", async function (req, res) {
     return res.status(400).json("Failed to get data artist");
   }
 });
+
 router.get("/genre/artist", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const {name} = req.query;
 
   try {

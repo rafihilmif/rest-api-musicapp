@@ -6,7 +6,6 @@ const { Op, Sequelize } = require("sequelize");
 const midtransClient = require('midtrans-client');
 
 const { v4: uuidv4 } = require('uuid');
-const Fans = require("../../models/Fans");
 const Merch = require("../../models/Merch");
 const Ordered = require("../../models/Ordered");
 const OrderedItem = require("../../models/OrderedItem");
@@ -288,6 +287,7 @@ router.post('/fans/order', async function (req, res) {
     res.status(500).json({ error: 'Failed to create transaction' });
   }
 });
+
 router.get("/fans/order", async function (req, res) {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -346,6 +346,12 @@ router.get("/fans/order", async function (req, res) {
 });
 
 router.get("/fans/detail/order", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
 
   try {
@@ -363,6 +369,12 @@ router.get("/fans/detail/order", async function (req, res) {
 });
 
 router.get("/fans/item/order", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+  }
+  
   const { id } = req.query;
     try {       
      const data = await OrderedItem.findAll({

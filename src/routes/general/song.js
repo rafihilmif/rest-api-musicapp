@@ -9,6 +9,12 @@ const Genre = require("../../models/Genre");
 const router = express.Router();
 
 router.get("/songs", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 6;
   const offset = (page - 1) * limit || 0;
@@ -37,6 +43,12 @@ router.get("/songs", async function (req, res) {
   }
 });
 router.get("/collection/song", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -98,6 +110,12 @@ router.get("/collection/song", async function (req, res) {
   }
 });
 router.get("/collection/song/sort/new", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -131,6 +149,12 @@ router.get("/collection/song/sort/new", async function (req, res) {
   }
 });
 router.get("/collection/song/sort/old", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -164,6 +188,12 @@ router.get("/collection/song/sort/old", async function (req, res) {
   }
 });
 router.get("/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query; 
   
   try {
@@ -185,6 +215,12 @@ router.get("/genre", async function (req, res) {
   }
 });
 router.get("/detail/song", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Song.findOne({
@@ -200,6 +236,12 @@ router.get("/detail/song", async function (req, res) {
   }
 });
 router.get("/browse/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query;
   try {
     if (name) {
@@ -221,6 +263,12 @@ router.get("/browse/genre", async function (req, res) {
   }
 });
 router.get("/result/top/song", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
   const { name } = req.query;
 
   try {

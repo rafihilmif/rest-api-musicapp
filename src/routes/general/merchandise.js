@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -48,6 +48,12 @@ router.get('/image/merchandise', async function (req, res) {
 });
 
 router.get("/merchandises", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
    try {
      const data = await Merch.findAll({
        limit: 5,
@@ -66,7 +72,14 @@ router.get("/merchandises", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Merch.findOne({
@@ -81,7 +94,14 @@ router.get("/merchandise", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -142,7 +162,15 @@ router.get("/collection/merchandise", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/tshirt", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -176,7 +204,14 @@ router.get("/collection/merchandise/sort/tshirt", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/longsleeve", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -210,7 +245,14 @@ router.get("/collection/merchandise/sort/longsleeve", async function (req, res) 
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/zipper", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -244,7 +286,14 @@ router.get("/collection/merchandise/sort/zipper", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/hoodie", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -278,7 +327,14 @@ router.get("/collection/merchandise/sort/hoodie", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/sweatshirt", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -312,7 +368,14 @@ router.get("/collection/merchandise/sort/sweatshirt", async function (req, res) 
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/collection/merchandise/sort/accessories", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id, page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -352,8 +415,13 @@ router.get("/collection/merchandise/sort/accessories", async function (req, res)
   }
 });
 
-
 router.get("/category", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query; 
   
   try {
@@ -374,7 +442,15 @@ router.get("/category", async function (req, res) {
     return res.status(400).json('Failed to get data merchandise');
   }
 });
+
 router.get("/detail/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+
   const { id } = req.query;
   try {
     const data = await Merch.findOne({
@@ -389,6 +465,13 @@ router.get("/detail/merchandise", async function (req, res) {
 });
 
 router.get("/related/merchandise", async function (req, res) { 
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+
   const { id } = req.query;
 
   try {
@@ -416,7 +499,15 @@ return res.json(data);
   }
   
 });
+
 router.get("/result/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+
   const { name } = req.query;
   
   try {
@@ -464,6 +555,12 @@ router.get("/result/merchandise", async function (req, res) {
 });
 
 router.get("/discover/artist/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id} = req.query;
 
   try {
@@ -493,6 +590,12 @@ router.get("/discover/artist/merchandise", async function (req, res) {
 });
 
 router.get("/genre/artist/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const {name} = req.query;
 
   try {

@@ -1,14 +1,14 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-
 const express = require("express");
-const { Op, Sequelize } = require("sequelize");
-const Fans = require("../../models/Fans");
-const router = express.Router();
+const { Op } = require("sequelize");
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
+
+const Fans = require("../../models/Fans");
 const Plan = require("../../models/Plan");
 
+const router = express.Router();
 
 const checkEmail = async (email) => {
   const dataCheck = await Fans.findOne({

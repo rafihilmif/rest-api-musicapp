@@ -1,13 +1,13 @@
-const { response } = require("express");
 const express = require("express");
-const { Op, Sequelize } = require("sequelize");
-const Fans = require("../../models/Fans");
-
+const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+
+const Fans = require("../../models/Fans");
+
 const router = express.Router();
 
 const storage = multer.diskStorage({

@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize} = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
@@ -46,36 +46,51 @@ router.post(
   "/playlist/add",
   upload.single("image"),
   async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
     const { name} = req.body;
 
     const filePath = req.file.filename;
 
     try {
-    const newIdPlaylist = uuidv4().replace(/-/g, '');
-    await Playlist.create({
-      id_playlist: newIdPlaylist,
-      id_user: id,
-      name: name,
-      image: filePath,
-      created_at: Date.now(),
-      status: 1,
-    });
-    return res.status(201).json({ message: "Successfully added playlist " + name });
+      const userdata = jwt.verify(token, process.env.JWT_KEY);
+      const userId = userdata.id_fans || userdata.id_artist;  
+      const newIdPlaylist = uuidv4().replace(/-/g, '');
+      await Playlist.create({
+        id_playlist: newIdPlaylist,
+        id_user: userId,
+        name: name,
+        image: filePath,
+        created_at: Date.now(),
+        status: 1,
+      });
+      return res.status(201).json({ message: "Successfully added playlist " + name });
     } catch (error) {
       return res.status(400).json({ message: "Error added playlist" });
     }
     
-});
-router.get("/playlist", async function (req, res) {
-    const { id } = req.query;
+  });
 
+router.get("/playlist", async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+   
     try {
-      if (id) {
+      if (token) {
+         const userdata = jwt.verify(token, process.env.JWT_KEY);
+        const userId = userdata.id_fans || userdata.id_artist;
+
         const data = await Playlist.findAll({
             where: {
                 id_user: {
-                [Op.notLike]: id,
+                [Op.notLike]: userId,
             },
               status: 1
           },
@@ -94,44 +109,72 @@ router.get("/playlist", async function (req, res) {
   } catch (error) {
     return res.status(400).send('Failed to search for merchandise');
     }
-    
 });
+
 router.get("/user/playlist", async function (req, res) {
-    const { id } = req.query;
-    try {
-        const data = await Playlist.findAll({
-            where: {
-                id_user: {
-                    [Op.like]: id
-                }
-            },
-            limit: 6
-        });
-        return res.status(200).json(data);
-  } catch (error) {
-    return res.status(400).send('Failed to search for merchandise');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
     }
-    
+
+    try {
+      const userdata = jwt.verify(token, process.env.JWT_KEY);
+        
+      const userId = userdata.id_fans || userdata.id_artist;
+  
+      const data = await Playlist.findAll({
+        where: {
+          id_user: userId
+        },
+        limit: 6
+      });
+
+      if (!data || data.length === 0) {
+        return res.status(404).json({ message: 'No playlists found' });
+      }
+
+      return res.status(200).json(data);
+    } catch (error) {
+        console.error('Error fetching playlists:', error);
+        return res.status(500).json({
+            message: 'Failed to fetch playlists',
+            error: error.message
+        });
+    }
 });
+
 router.get("/user/detail/playlist", async function (req, res) {
-    const { id } = req.query;
-    try {
-        const data = await Playlist.findOne({
-            where: {
-                id_playlist: {
-                    [Op.like]: id
-                }
-            },
-        });
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const { id } = req.query;
+  try {
+    const data = await Playlist.findOne({
+      where: {
+        id_playlist: {
+          [Op.like]: id
+        }
+      },
+    });
     
-        return res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(400).send('Failed to search for merchandise');
-    }
+  }
     
 });
 
 router.put("/user/update/playlist", upload.single('image'), async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
   const { id } = req.query;
   const newData = req.body;
 
@@ -168,38 +211,49 @@ router.put("/user/update/playlist", upload.single('image'), async function (req,
   }
 });
 router.get("/detail/owner/playlist", async function (req, res) {
-    const { id } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
   
-    if (id.includes("ART")) {
-        const data = await Artist.findOne({
-            where: {
-                id_artist: {
-                    [Op.like]: id,
-                },
-            },
-            attributes: {
-                exclude: ["password", "created_at", "status", "formed", "genre", "role", "description"],
-            },
-        });
-        return res.status(200).json(data);
-    }
-    else if (id.includes("FNS")) {
-        const data = await Fans.findOne({
-            where: {
-                id_fans: {
-                    [Op.like]: id,
-                },
-            },
-            attributes: {
-                exclude: ["first_name", "last_name", "birth", "phone", "role", "gender", "password", "created_at", "status"],
-            },
-        });
-        return res.status(200).json(data);
-    } else {
-        return res.status(404).json({ message: "Data not found" });
-    }
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  const { id } = req.query;
+  if (id.includes("ART")) {
+    const data = await Artist.findOne({
+      where: {
+        id_artist: {
+          [Op.like]: id,
+        },
+      },
+      attributes: {
+        exclude: ["password", "created_at", "status", "formed", "genre", "role", "description"],
+      },
+    });
+    return res.status(200).json(data);
+  }
+  else if (id.includes("FNS")) {
+    const data = await Fans.findOne({
+      where: {
+        id_fans: {
+          [Op.like]: id,
+        },
+      },
+      attributes: {
+        exclude: ["first_name", "last_name", "birth", "phone", "role", "gender", "password", "created_at", "status"],
+      },
+    });
+    return res.status(200).json(data);
+  } else {
+    return res.status(404).json({ message: "Data not found" });
+  }
 });
+
 router.get('/search/song/playlist', async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { q} = req.query;
 
   if (!q) {
@@ -232,6 +286,12 @@ router.get('/search/song/playlist', async function (req, res) {
 });
 
 router.post('/user/add/song/playlist', async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { idPlaylist, idSong } = req.query;
 
   let newIdPrefix = "PLYSNG";
@@ -269,6 +329,12 @@ router.post('/user/add/song/playlist', async function (req, res) {
 });
 
 router.get('/playlist/song', async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   try {
     const data = await PlaylistSong.findAll({
@@ -304,6 +370,12 @@ router.get('/playlist/song', async function (req, res) {
   }
 });
 router.delete('/user/playlist/song', async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
   const { id } = req.query;
   try {
     const deletedSong = await PlaylistSong.destroy({
@@ -341,6 +413,12 @@ router.get('/collection/playlist', async function (req, res) {
 });
 
 router.delete('/user/playlist', async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
   const { id } = req.query;
 
   try {
@@ -362,6 +440,12 @@ router.delete('/user/playlist', async function (req, res) {
 });
 
 router.delete('/user/playlist', async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   try {
     const playlist = await Playlist.findOne({
@@ -508,6 +592,12 @@ router.get('/search/song/like', async function (req, res) {
   }
 });
 router.get("/result/playlist", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { name } = req.query;
   
   try {

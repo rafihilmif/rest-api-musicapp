@@ -1,13 +1,15 @@
 const jwt = require("jsonwebtoken");
-const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
+
 const Fans = require("../../models/Fans");
 const Plan = require("../../models/Plan");
 const PlanPayment = require("../../models/PlanPayment");
+
 const midtransClient = require('midtrans-client');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+
 const snap = new midtransClient.Snap({
   isProduction: false, 
   serverKey: process.env.SERVER_KEY,
@@ -16,38 +18,6 @@ const coreClient = new midtransClient.CoreApi({
     isProduction: false,
     serverKey: process.env.SERVER_KEY,
     clientKey: process.env.CLIENT_KEY
-});
-
-router.post("/fans/plan", async function (req, res) {
-  const { id } = req.query;
-   let newIdPrefixPlan = "PLN";
-    let highestIdEntry = await Plan.findOne({
-      where: {
-        id_plan: {
-          [Op.like]: `${newIdPrefixPlan}%`
-        }
-      },
-      order: [[ 'id_plan', 'DESC' ]] 
-    });
-    let newIdNumber = 1;
-    if (highestIdEntry) {
-      let highestId = highestIdEntry.id_plan;
-      let numericPart = highestId.replace(newIdPrefixPlan, ''); 
-      newIdNumber = parseInt(numericPart, 10) + 1;
-    }
-    let newIdPlan = newIdPrefix + newIdNumber.toString().padStart(3, '0');
-
-    try {
-        await Plan.create({
-            id_plan: newIdPlan,
-            id_fans: id,
-            status: 1,
-            type: 'free',
-            created_at: Date.now()
-        });
-    } catch (error) {
-        return res.status(400).send("create plan" + error);
-    }
 });
 
 router.post('/plan/payment', async function (req, res) {

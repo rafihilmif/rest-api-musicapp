@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
@@ -50,12 +51,17 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.get("/detail/artist", async function (req, res) {
-  const { email } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
   const data = await Artist.findOne({
     where: {
-      email: {
-        [Op.like]: email,
-      },
+      id_artist: userdata.id_artist
     },
     attributes: {
       exclude: ["password", "created_at", "status"],
@@ -65,14 +71,19 @@ router.get("/detail/artist", async function (req, res) {
 });
 
 router.put("/account/artist", upload.single("image"), async function (req, res) {
-  const { email } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
   const { old_password, new_password, ...newData } = req.body;
   try {
     const artist = await Artist.findOne({
       where: {
-        email: {
-          [Op.like]: email
-        }
+        id_artist: userdata.id_artist
       }
     });
 
