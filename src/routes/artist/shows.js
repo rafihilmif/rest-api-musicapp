@@ -1,16 +1,14 @@
-const { response } = require("express");
+
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
-const Artist = require("../../models/Artist");
-const Shows = require("../../models/Shows");
-
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
-const JWT_KEY = "makeblackmetalhateagain";
 const fs = require("fs");
 const Joi = require("joi");
 
+const Artist = require("../../models/Artist");
+const Shows = require("../../models/Shows");
 const router = express.Router();
 
 const storage = multer.diskStorage({
@@ -57,7 +55,12 @@ router.post(
   "/artist/shows/add",
   upload.single("image"),
   async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+    
     let { name, date, location, contact, description, status } = req.body;
     const { image } = req.file;
     const filePath = req.file.filename;
@@ -72,26 +75,27 @@ router.post(
     });
 
     try {
+       const userdata = jwt.verify(token, process.env.JWT_KEY);
       await schema.validateAsync(req.body);
-       let newIdPrefixShow = "SWHS";
-    let highestIdEntryShow = await Shows.findOne({
-      where: {
-        id_show: {
-          [Op.like]: `${newIdPrefixShow}%`
-        }
-      },
-      order: [['id_show', 'DESC']]
-    });
-    let newIdNumberShow = 1;
-    if (highestIdEntryShow) {
-      let highestIdShow = highestIdEntryShow.id_show;
-      let numericPartShow = highestIdShow.replace(newIdPrefixShow, ''); 
-      newIdNumberShow = parseInt(numericPartShow, 10) + 1;
-    }
+      let newIdPrefixShow = "SWHS";
+      let highestIdEntryShow = await Shows.findOne({
+        where: {
+          id_show: {
+            [Op.like]: `${newIdPrefixShow}%`
+          }
+        },
+        order: [['id_show', 'DESC']]
+      });
+      let newIdNumberShow = 1;
+      if (highestIdEntryShow) {
+        let highestIdShow = highestIdEntryShow.id_show;
+        let numericPartShow = highestIdShow.replace(newIdPrefixShow, '');
+        newIdNumberShow = parseInt(numericPartShow, 10) + 1;
+      }
       let newIdShows = newIdPrefixShow + newIdNumberShow.toString().padStart(3, '0');
       await Shows.create({
         id_show: newIdShows,
-        id_artist: id,
+        id_artist: userdata.id_artist,
         name: name,
         duedate: date,
         location: location,
@@ -103,25 +107,31 @@ router.post(
       });
       return res.status(201).json({ message: "Successfully added show" });
     } catch (error) {
-       if (error.isJoi) {
-      return res.status(400).json({
-        message: error.details[0].message, 
-        path: error.details[0].path[0],   
-      });
-      }else if (error.path) {
-      return res.status(400).json({
-        message: error.message,
-        path: error.path,
-      });
+      if (error.isJoi) {
+        return res.status(400).json({
+          message: error.details[0].message,
+          path: error.details[0].path[0],
+        });
+      } else if (error.path) {
+        return res.status(400).json({
+          message: error.message,
+          path: error.path,
+        });
       
-    } else {
-      return res.status(400).json({ message: error.message });
-    }
+      } else {
+        return res.status(400).json({ message: error.message });
+      }
     }
   },
 );
 
 router.get("/artist/collection/shows", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
   const { id } = req.query;
   const { page, pageSize } = req.query;
   const limit = pageSize || 18;
@@ -154,6 +164,12 @@ router.get("/artist/collection/shows", async function (req, res) {
   }
 });
 router.get("/artist/collection/shows/sort/upcoming", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
   const { id,  page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -188,6 +204,12 @@ router.get("/artist/collection/shows/sort/upcoming", async function (req, res) {
   }
 });
 router.get("/artist/shows", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
   const { id } = req.query;
   const { limit } = req.query || 5;
   try {
@@ -203,6 +225,12 @@ router.get("/artist/shows", async function (req, res) {
   }
 });
 router.put("/artist/show/update", upload.single('image'), async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+  }
+  
   const { id } = req.query;
   const newData = req.body;
 
@@ -232,13 +260,19 @@ router.put("/artist/show/update", upload.single('image'), async function (req, r
 
     await show.save();
 
-    return res.status(200).send('Data successfully updated');
+    return res.status(200).json({message: "Data show successfully updated"});
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');
   }
 });
 router.delete("/artist/show/delete", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+  }
+  
   const { id } = req.query;
 
   const data = await Shows.findOne({

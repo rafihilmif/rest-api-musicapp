@@ -561,13 +561,14 @@ router.get("/discover/artist/merchandise", async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  const { id} = req.query;
+ 
 
   try {
+     const userdata = jwt.verify(token, process.env.JWT_KEY);
     const data = await Merch.findAll({
       where: {
         id_artist: {
-           [Op.notLike] : id
+           [Op.notLike] : userdata.id_artist
         },
         status: 1
       },

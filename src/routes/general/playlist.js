@@ -204,7 +204,9 @@ router.put("/user/update/playlist", upload.single('image'), async function (req,
 
     await playlist.save();
 
-    return res.status(200).send('Data successfully updated');
+    return res.status(200).json({
+       message: "Data playlist successfully updated",
+    });
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');

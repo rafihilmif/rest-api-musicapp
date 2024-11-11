@@ -37,6 +37,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
 router.post(
   "/artist/album/add",
   upload.single("image"),
@@ -113,23 +114,21 @@ router.get("/artist/collection/album", async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  const userdata = jwt.verify(token, process.env.JWT_KEY);
-
-  const {page, pageSize  } = req.query;
+  const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
    const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: userdata.id_artist
+            id_artist: id,
           },
         },
       ],
@@ -152,23 +151,21 @@ router.get('/artist/collection/album/sort/new', async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  const userdata = jwt.verify(token, process.env.JWT_KEY);
-
-  const {page, pageSize  } = req.query;
+  const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
    try {
       const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: userdata.id_artist,
+           id_artist: id,
           },
         },
       ],
@@ -191,23 +188,21 @@ router.get('/artist/collection/album/sort/old', async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  const userdata = jwt.verify(token, process.env.JWT_KEY);
-
-  const {page, pageSize  } = req.query;
+  const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
     const { rows, count } = await Album.findAndCountAll({
       where: {
-        id_artist: userdata.id_artist,
+        id_artist: id,
       },
       include: [
         {
           model: Artist,
           attributes: ["name"],
           where: {
-            id_artist: userdata.id_artist,
+            id_artist: id,
           },
         },
       ],
@@ -314,7 +309,9 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
 
     await album.save();
 
-    return res.status(200).send('Data successfully updated');
+    return res.status(200).json({
+       message: "Data album successfully updated",
+    });
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');

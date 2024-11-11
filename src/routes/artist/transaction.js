@@ -1,9 +1,6 @@
-const { response } = require("express");
-const {configs} = require("dotenv").config();
-const axios = require('axios');
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
-const midtransClient = require('midtrans-client');
 
 const Transaction = require("../../models/Transaction");
 const TransactionItem = require("../../models/TransactionItem");
@@ -13,13 +10,21 @@ const ImageMerch = require("../../models/ImageMerch");
 const router = express.Router();
 
 router.get("/artist/transaction", async function (req, res) {
-    const { id, pageSize, page, timeFilter } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+    const {pageSize, page, timeFilter } = req.query;
     const limit = pageSize || 9;
     const offset = (page - 1) * limit || 0;
     
     const currentDate = new Date();
     let whereClause = {
-        id_artist: id
+        id_artist: userdata.id_artist
     };
 
     switch (timeFilter) {
@@ -64,6 +69,12 @@ router.get("/artist/transaction", async function (req, res) {
 });
 
 router.get("/artist/detail/transaction", async function (req, res) {
+      const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
     const { id } = req.query;
 
     try {
@@ -80,6 +91,12 @@ router.get("/artist/detail/transaction", async function (req, res) {
     }
 });
 router.get("/artist/item/transaction", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
     const { id } = req.query;
 
     try {       
@@ -110,14 +127,20 @@ router.get("/artist/item/transaction", async function (req, res) {
     }
 });
 router.get("/artist/merchandise/sales", async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
     try {
+        const userdata = jwt.verify(token, process.env.JWT_KEY);
+
         const data = await Merch.findAll({
             where: {
-                id_artist: id
+                id_artist: userdata.id_artist
             },
             include: [
-            
                 {
                     model: TransactionItem,
                     attributes: []
@@ -149,12 +172,18 @@ router.get("/artist/merchandise/sales", async function (req, res) {
     }
 });
 router.get("/artist/total/revenue", async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
 
     try {
+        const userdata = jwt.verify(token, process.env.JWT_KEY);
+
         const data = await Transaction.sum('total', {
             where: {
-                id_artist: id
+                id_artist: userdata.id_artist
             }
         });
         return res.status(200).json(data);
@@ -162,13 +191,19 @@ router.get("/artist/total/revenue", async function (req, res) {
         return res.status(400).json("Failed to get total revenue");
     }
 });
+
 router.get("/artist/total/merchandise/sales", async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
 
     try {
+        const userdata = jwt.verify(token, process.env.JWT_KEY);
         const data = await Transaction.findAll({
             where: {
-                id_artist: id
+                id_artist: userdata.id_artist
             },
             include: [{
                 model: TransactionItem,

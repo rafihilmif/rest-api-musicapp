@@ -81,6 +81,13 @@ router.get("/follow/check", async function (req, res) {
 });
 
 router.get("/total/follower", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+
     const { id } = req.query;  
     try {
         const data = await Follow.count({

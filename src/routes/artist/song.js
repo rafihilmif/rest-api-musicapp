@@ -1,4 +1,5 @@
-const { response } = require("express");
+
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 const Joi = require("joi");
@@ -10,7 +11,6 @@ const fs = require("fs");
 const Album = require("../../models/Album");
 const Artist = require("../../models/Artist");
 const Song = require("../../models/Song");
-const Playlist = require("../../models/Playlist");
 const PlaylistSong = require("../../models/PlaylistSong");
 const router = express.Router();
 
@@ -87,108 +87,115 @@ router.post(
     },
   ]),
   async function (req, res) {
-    const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
     let { album, name, genre, release_date, credit, lyric, status } = req.body;
 
     const audioFile = req.files.audio[0];
     const graphicFile = req.files.image[0];
     
     const schema = Joi.object({
-    album: Joi.string().allow(null),
-    name: Joi.string().required(),
-    genre: Joi.string().required(),
-    release_date: Joi.date().required(),
-    credit: Joi.string().allow(null),
-    lyric: Joi.string().allow(null),
-    status: Joi.number()
+      album: Joi.string().allow(null),
+      name: Joi.string().required(),
+      genre: Joi.string().required(),
+      release_date: Joi.date().required(),
+      credit: Joi.string().allow(null),
+      lyric: Joi.string().allow(null),
+      status: Joi.number()
     });
     
     try {
+      const userdata = jwt.verify(token, process.env.JWT_KEY);
+
       await schema.validateAsync(req.body);
-    let newIdPrefixSong = "SNGS";
-    let highestIdEntrySong = await Song.findOne({
-      where: {
-        id_song: {
-          [Op.like]: `${newIdPrefixSong}%`
-        }
-      },
-      order: [['id_song', 'DESC']]
-    });
-    let newIdNumberSong = 1;
-    if (highestIdEntrySong) {
-      let highestIdSong = highestIdEntrySong.id_song;
-      let numericPartSong = highestIdSong.replace(newIdPrefixSong, ''); 
-      newIdNumberSong = parseInt(numericPartSong, 10) + 1;
-    }
-    let newIdSong = newIdPrefixSong + newIdNumberSong.toString().padStart(3, '0');
-    const dataAlbum = await Album.findAll({
-      where: {
-        name: {
-          [Op.like]: album,
+      let newIdPrefixSong = "SNGS";
+      let highestIdEntrySong = await Song.findOne({
+        where: {
+          id_song: {
+            [Op.like]: `${newIdPrefixSong}%`
+          }
         },
-      },
-    });
-    let idAlbum = null;
-    dataAlbum.forEach((element) => {
-      idAlbum = element.id_album;
-    });
-      if (album === "-") {
-      const data = await Song.create({
-        id_song: newIdSong,
-        id_artist: id,
-        id_album: "-",
-        name: name,
-        album: "-",
-        genre: genre,
-        release_date: release_date,
-        credit: credit,
-        lyric: lyric,
-        image: graphicFile.filename,
-        audio: audioFile.filename,
-        created_at: Date.now(),
-        status: status,
+        order: [['id_song', 'DESC']]
       });
+      let newIdNumberSong = 1;
+      if (highestIdEntrySong) {
+        let highestIdSong = highestIdEntrySong.id_song;
+        let numericPartSong = highestIdSong.replace(newIdPrefixSong, '');
+        newIdNumberSong = parseInt(numericPartSong, 10) + 1;
+      }
+      let newIdSong = newIdPrefixSong + newIdNumberSong.toString().padStart(3, '0');
+      const dataAlbum = await Album.findAll({
+        where: {
+          name: {
+            [Op.like]: album,
+          },
+        },
+      });
+      let idAlbum = null;
+      dataAlbum.forEach((element) => {
+        idAlbum = element.id_album;
+      });
+      if (album === "-") {
+        const data = await Song.create({
+          id_song: newIdSong,
+          id_artist: userdata.id_artist,
+          id_album: "-",
+          name: name,
+          album: "-",
+          genre: genre,
+          release_date: release_date,
+          credit: credit,
+          lyric: lyric,
+          image: graphicFile.filename,
+          audio: audioFile.filename,
+          created_at: Date.now(),
+          status: status,
+        });
         return res.status(201).json({
-      message: "Successfully added song",
-      data: data
-    });
+          message: "Successfully added song",
+          data: data
+        });
       }
       else {
-       const data = await Song.create({
-        id_song: newIdSong,
-        id_artist: id,
-        id_album: idAlbum,
-        name: name,
-        album: album,
-        genre: genre,
-        release_date: release_date,
-        credit: credit,
-        lyric: lyric,
-        image: graphicFile.filename,
-        audio: audioFile.filename,
-        created_at: Date.now(),
-        status: status,
-       });
+        const data = await Song.create({
+          id_song: newIdSong,
+          id_artist: userdata.id_artist,
+          id_album: idAlbum,
+          name: name,
+          album: album,
+          genre: genre,
+          release_date: release_date,
+          credit: credit,
+          lyric: lyric,
+          image: graphicFile.filename,
+          audio: audioFile.filename,
+          created_at: Date.now(),
+          status: status,
+        });
         return res.status(201).json({
-      message: "Successfully added song",
-      data: data
-    });
+          message: "Successfully added song",
+          data: data
+        });
       }
     
     } catch (error) {
-       if (error.isJoi) {
-      return res.status(400).json({
-        message: error.details[0].message, 
-        path: error.details[0].path[0],   
-      });
-      }else if (error.path) {
-      return res.status(400).json({
-        message: error.message,
-        path: error.path,
-      });
-    } else {
-      return res.status(400).json({ message: error.message });
-    }
+      if (error.isJoi) {
+        return res.status(400).json({
+          message: error.details[0].message,
+          path: error.details[0].path[0],
+        });
+      } else if (error.path) {
+        return res.status(400).json({
+          message: error.message,
+          path: error.path,
+        });
+      } else {
+        return res.status(400).json({ message: error.message });
+      }
     }
   },
 );
@@ -372,7 +379,7 @@ router.put("/artist/song/update", upload.fields([
       }
       const data = await song.update(saveNewUpdateData);
       return res.status(200).json({
-        message: "Successfully to update data",
+         message: "Data song successfully updated",
         data: data
       });
     } catch (error) {

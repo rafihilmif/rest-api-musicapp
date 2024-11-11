@@ -8,6 +8,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const Follow = require("../../models/Follow");
 
 const router = express.Router();
 
@@ -128,6 +129,27 @@ router.put("/account/artist", upload.single("image"), async function (req, res) 
     console.error("Error updating data:", error);
     return res.status(400).send("Gagal merubah data");
   }
+});
+
+router.get("/artist/total/follower", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+    try {
+        const data = await Follow.count({
+            where: {
+                id_artist: userdata.id_artist
+            }
+        });
+        return res.status(200).json(data);
+    } catch (error) {
+        return res.status(500).json({ error: 'Server error' });
+    }
 });
 
 module.exports = router;

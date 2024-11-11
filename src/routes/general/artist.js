@@ -119,13 +119,14 @@ router.get("/discover/artist/genre", async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
-  const { id, name } = req.query;
+  const {name} = req.query;
 
   try {
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
     const data = await Artist.findAll({
       where: {
         id_artist: {
-          [Op.notLike]: id
+          [Op.notLike]: userdata.id_artist
         },
         genre: name,
         status: 1

@@ -50,8 +50,13 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 router.post('/artist/merchandise/add', upload.array('image', 5), async function (req, res) {
-  const { id} = req.query;
-  let { name, artist, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
 
    const imageUrl = req.files.map((file, index) => ({
     filename: file.filename,
@@ -60,7 +65,6 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
   
   const schema = Joi.object({
     name: Joi.string().required(),
-    artist: Joi.string().required(),
     category: Joi.string().required(),
     price: Joi.number().greater(0).required(),
     description: Joi.string(),
@@ -72,8 +76,14 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
     stock: Joi.number()
   });
 
+  
+  
   try {
     await schema.validateAsync(req.body);
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+    const artistTemp = await Artist.findByPk(userdata.id_artist);
+
     let newIdPrefixMerch = "MRCH";
     let highestIdEntryMerch = await Merch.findOne({
       where: {
@@ -93,9 +103,9 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
 
     const data = await Merch.create({
       id_merchandise: newIdMerchandise,
-      id_artist: id,
+      id_artist: userdata.id_artist,
       name: name,
-      artist: artist,
+      artist: artistTemp.name,
       category: category,
       s: sizeS,
       m: sizeM,
@@ -137,11 +147,19 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
 });
 
 router.get("/artist/collection/merchandise", async function (req, res) {
-  const { id, page, pageSize  } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+
     const { rows, count } = await Merch.findAndCountAll({
       where: {
         id_artist: id,
@@ -152,9 +170,7 @@ router.get("/artist/collection/merchandise", async function (req, res) {
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+           id_artist: id,
           },
         },
       ],
@@ -171,14 +187,22 @@ router.get("/artist/collection/merchandise", async function (req, res) {
   }
 });
 router.get("/artist/collection/merchandise/sort/tshirt", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+       id_artist: id,
         category: 'T-shirt'
       },
       include: [
@@ -186,9 +210,7 @@ router.get("/artist/collection/merchandise/sort/tshirt", async function (req, re
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+           id_artist: id,
           },
         },
       ],
@@ -205,14 +227,21 @@ router.get("/artist/collection/merchandise/sort/tshirt", async function (req, re
   }
 });
 router.get("/artist/collection/merchandise/sort/longsleeve", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+     const userdata = jwt.verify(token, process.env.JWT_KEY);
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+         id_artist: id,
         category: 'Long Sleeve'
       },
       include: [
@@ -220,9 +249,7 @@ router.get("/artist/collection/merchandise/sort/longsleeve", async function (req
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+             id_artist: id,
           },
         },
       ],
@@ -239,14 +266,21 @@ router.get("/artist/collection/merchandise/sort/longsleeve", async function (req
   }
 });
 router.get("/artist/collection/merchandise/sort/zipper", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+     const userdata = jwt.verify(token, process.env.JWT_KEY);
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+       id_artist: id,
         category: 'Zipper Hoodie'
       },
       include: [
@@ -254,9 +288,7 @@ router.get("/artist/collection/merchandise/sort/zipper", async function (req, re
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+           id_artist: id,
           },
         },
       ],
@@ -273,14 +305,21 @@ router.get("/artist/collection/merchandise/sort/zipper", async function (req, re
   }
 });
 router.get("/artist/collection/merchandise/sort/hoodie", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+     const userdata = jwt.verify(token, process.env.JWT_KEY);
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+       id_artist: id,
         category: 'Hoodie'
       },
       include: [
@@ -288,9 +327,7 @@ router.get("/artist/collection/merchandise/sort/hoodie", async function (req, re
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+            id_artist: id,
           },
         },
       ],
@@ -307,14 +344,21 @@ router.get("/artist/collection/merchandise/sort/hoodie", async function (req, re
   }
 });
 router.get("/artist/collection/merchandise/sort/sweatshirt", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+     const userdata = jwt.verify(token, process.env.JWT_KEY);
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+       id_artist: id,
         category: 'Sweatshirt'
       },
       include: [
@@ -322,9 +366,7 @@ router.get("/artist/collection/merchandise/sort/sweatshirt", async function (req
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+           id_artist: id,
           },
         },
       ],
@@ -341,14 +383,21 @@ router.get("/artist/collection/merchandise/sort/sweatshirt", async function (req
   }
 });
 router.get("/artist/collection/merchandise/sort/accessories", async function (req, res) {
-  const { id, page, pageSize} = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
 
   try {
+    
     const { rows, count } = await Merch.findAndCountAll({
       where: {
-        id_artist: id,
+       id_artist: id,
         category: {
       [Op.and]: [{ [Op.notLike]: "%T-Shirt%" },{ [Op.notLike]: "%Long Sleeve%" },{ [Op.notLike]: "%Zipper Hoodie%" },
     { [Op.notLike]: "%Hoodie%" },
@@ -361,9 +410,7 @@ router.get("/artist/collection/merchandise/sort/accessories", async function (re
           model: Artist,
           attributes: ["id_artist", "name"],
           where: {
-            id_artist: {
-              [Op.like]: id,
-            },
+          id_artist: id,
           },
         },
       ],
@@ -380,6 +427,12 @@ router.get("/artist/collection/merchandise/sort/accessories", async function (re
   }
 });
 router.get('/artist/image/merchandise', async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   const { number } = req.query;
 
@@ -418,8 +471,13 @@ router.get('/artist/image/merchandise', async function (req, res) {
  
 });
 
-
 router.put('/artist/merch/update', upload.array('image', 5), async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
   const newData = req.body;
 
@@ -487,7 +545,7 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
       }
     }
     return res.status(200).json({
-      message: "Data successfully updated",
+      message: "Data merch successfully updated",
       data: newData
     });
   } catch (error) {
@@ -497,26 +555,37 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
 });
 
 router.get("/artist/merchandise", async function (req, res) {
-  const { id } = req.query;
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { limit } = req.query || 5;
   try {
-   const data = await Merch.findAll({
+    const data = await Merch.findAll({
       where: {
-        id_artist:id,
+        id_artist: id,
       },
       limit: limit
     });
     return res.status(200).json(data);
   } catch (err) {
-     return res.status(400).send("Failed to get data merch");
+    return res.status(400).send("Failed to get data merch");
   }
 });
 router.get("/artist/total/merchadise", async function (req, res) {
-  const { id } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   try {
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
     const data = await Merch.count({
       where: {
-        id_artist : id
+        id_artist: userdata.id_artist,
       }
     });
     return res.status(200).json(data);
@@ -525,6 +594,12 @@ router.get("/artist/total/merchadise", async function (req, res) {
   }
 });
 router.delete("/artist/merchandise/delete", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   const { id } = req.query;
 
   const dataImage = await ImageMerch.findAll({
@@ -532,6 +607,7 @@ router.delete("/artist/merchandise/delete", async function (req, res) {
       id_merchandise: id
     }
   });
+
   try {
     await CartItem.destroy({
       where: {
@@ -549,7 +625,12 @@ router.delete("/artist/merchandise/delete", async function (req, res) {
     });
     });
     await Promise.all(imageDeletion);
-
+      await CartItem.destroy({
+      where: {
+        id_merchandise: id
+      }
+      });
+    
      await Merch.destroy({
       where: {
         id_merchandise: id
