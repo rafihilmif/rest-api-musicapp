@@ -281,7 +281,10 @@ router.post('/fans/order', async function (req, res) {
       }
     });
     
-    res.status(200).json({ token: snapToken});
+    res.status(200).json({
+      token: snapToken,
+      data: data
+    });
   } catch (error) {
     console.error('Midtrans transaction error:', error);
     res.status(500).json({ error: 'Failed to create transaction' });

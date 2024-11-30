@@ -60,7 +60,7 @@ router.post(
       const userdata = jwt.verify(token, process.env.JWT_KEY);
       const userId = userdata.id_fans || userdata.id_artist;  
       const newIdPlaylist = uuidv4().replace(/-/g, '');
-      await Playlist.create({
+      const data= await Playlist.create({
         id_playlist: newIdPlaylist,
         id_user: userId,
         name: name,
@@ -68,7 +68,10 @@ router.post(
         created_at: Date.now(),
         status: 1,
       });
-      return res.status(201).json({ message: "Successfully added playlist " + name });
+      return res.status(201).json({
+        message: "Successfully added playlist ",
+        data: data
+       });
     } catch (error) {
       return res.status(400).json({ message: "Error added playlist" });
     }

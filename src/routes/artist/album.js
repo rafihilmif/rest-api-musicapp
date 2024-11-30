@@ -48,6 +48,13 @@ router.post(
       return res.status(401).json({ message: 'No token provided' });
     }
 
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+    
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
     const { name, description, status } = req.body;
 
     const filePath = req.file.filename;
@@ -79,7 +86,7 @@ router.post(
       }
       let newIdAlbum = newIdPrefixAlbum + newIdNumberAlbum.toString().padStart(3, '0');
 
-      await Album.create({
+      const data = await Album.create({
         id_album: newIdAlbum,
         id_artist: userdata.id_artist,
         name: name,
@@ -88,7 +95,10 @@ router.post(
         created_at: Date.now(),
         status: status,
       });
-     return res.status(201).json({message:"Successfully added album"});
+      return res.status(201).json({
+        message: "Successfully added album",
+       data: data
+     });
     } catch (error) {
       if (error.isJoi) {
       return res.status(400).json({
@@ -112,6 +122,14 @@ router.get("/artist/collection/album", async function (req, res) {
   
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
+  }
+
+   const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+    
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
   }
 
   const {id,page, pageSize  } = req.query;
@@ -151,6 +169,12 @@ router.get('/artist/collection/album/sort/new', async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
+   const userdata = jwt.verify(token, process.env.JWT_KEY);
+    
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
   const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -188,6 +212,12 @@ router.get('/artist/collection/album/sort/old', async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
+   const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
   const {id,page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -219,14 +249,26 @@ router.get('/artist/collection/album/sort/old', async function (req, res) {
   }
 });
 router.get("/artist/album", async function (req, res) {
-  const { id, limit, name } = req.query;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+   const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+    if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
+  const {limit, name } = req.query;
   const limitValue = parseInt(limit);
  
   try {
     if (limitValue) {
       const data = await Album.findAll({
       where: {
-        id_artist: id
+        id_artist: userdata.id_artist,
       },
       limit: limitValue,
     });
@@ -235,10 +277,8 @@ router.get("/artist/album", async function (req, res) {
     if (name) {
       const data = await Album.findAll({
         where: {
-          id_artist: {
-            [Op.like] : id
-          },
-           name: {
+          id_artist: userdata.id_artist,
+          name: {
           [Op.notLike]: name
         }
         }
@@ -248,13 +288,13 @@ router.get("/artist/album", async function (req, res) {
     else {
       const data = await Album.findAll({
       where: {
-        id_artist: id,
+        id_artist: userdata.id_artist,
       }
     });
     return res.status(200).json(data);
     }
   } catch (err) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).send("Failed to get data album");
   }
 });
 router.get("/artist/detail/album", async function (req, res) {
@@ -278,6 +318,12 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
   
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
   }
 
   const { id } = req.query;
@@ -310,7 +356,8 @@ router.put("/artist/album/update", upload.single('image'), async function (req, 
     await album.save();
 
     return res.status(200).json({
-       message: "Data album successfully updated",
+      message: "Data album successfully updated",
+      data: newData
     });
   } catch (error) {
     console.error('Failed to update data:', error);
@@ -323,6 +370,12 @@ router.delete("/artist/album/delete", async function (req, res) {
   
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
   }
 
   const { id } = req.query;

@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -143,6 +143,18 @@ router.post(
   "/admin/artist/add",
   upload.single("image"),
   async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+    if (userdata.role !== "admin") {
+      return res.status(401).json({ message: 'your are not admin' });
+    }
+    
     let { name, email, username, password, genre, formed } = req.body;
     const filePath = req.file.filename;
 
@@ -185,6 +197,9 @@ router.post(
         role: "artist",
         description: null,
         avatar: filePath,
+        verify_token: null,
+        is_verified: 0,
+        verify_token_expired: null,
         created_at: Date.now(),
         status: 1,
       });
@@ -208,6 +223,18 @@ router.post(
 );
 
 router.get("/admin/artists", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
@@ -226,6 +253,7 @@ router.get("/admin/artists", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/admin/artist", async function (req, res) {
   const { id } = req.query;
   try {
@@ -242,6 +270,18 @@ router.get("/admin/artist", async function (req, res) {
   }
 });
 router.put("/admin/artist", upload.single("image"), async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   const newData = req.body;
 
@@ -272,11 +312,24 @@ router.put("/admin/artist", upload.single("image"), async function (req, res) {
       saveNewUpdateData.password = passwordHash;
     }
     await artist.update(saveNewUpdateData);
+    return res.status(200).json({ message: "Successfully update data artist" });
   } catch (error) {
     return res.status(400).send("Gagal merubah data");
   }
 });
 router.get("/admin/choose/artist", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const data = await Artist.findAll();
     return res.status(200).json(data);
@@ -284,10 +337,23 @@ router.get("/admin/choose/artist", async function (req, res) {
     return res.status(400).send("Failed to get data artist" + error);
   }
 });
+
 router.post(
   "/admin/fans/add",
   upload.single("image"),
   async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
     let { first_name, last_name, email, username, password, gender, birth } =
       req.body;
     
@@ -323,21 +389,24 @@ router.post(
     let newIdFans = newIdPrefixFans + newIdNumberFans.toString().padStart(3, '0');
     
     const passwordHash = bcrypt.hashSync(password, 10);
-    Fans.create({
-      id_fans: newIdFans,
-      email: email,
-      first_name: first_name,
-      last_name: last_name,
-      password: passwordHash,
-      username: username,
-      birth: birth,
-      gender: gender,
-      phone: null,
-      role: "fans",
-      avatar: filePath,
-      created_at: Date.now(),
-      status: 1,
-    });
+      Fans.create({
+        id_fans: newIdFans,
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        password: passwordHash,
+        username: username,
+        birth: birth,
+        gender: gender,
+        phone: null,
+        role: "fans",
+        avatar: filePath,
+        verify_token: null,
+        is_verified: 0,
+        verify_token_expired: null,
+        created_at: Date.now(),
+        status: 1,
+      });
     let newIdPrefixPlan = "PLN";
     let highestIdEntryPlan = await Plan.findOne({
       where: {
@@ -384,6 +453,18 @@ router.post(
   },
 );
 router.get("/admin/fans", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
@@ -403,6 +484,18 @@ router.get("/admin/fans", async function (req, res) {
   }
 });
 router.get("/admin/fan", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Fans.findOne({
@@ -418,6 +511,18 @@ router.get("/admin/fan", async function (req, res) {
   }
 });
 router.put("/admin/fan", upload.single("image"), async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   const newData = req.body;
 
@@ -448,11 +553,24 @@ router.put("/admin/fan", upload.single("image"), async function (req, res) {
       saveNewUpdateData.password = passwordHash;
     }
     await fan.update(saveNewUpdateData);
+     return res.status(200).json({ message: "Successfully update data fans" });
   } catch (error) {
     return res.status(400).send("Gagal merubah data");
   }
 });
 router.put("/admin/fans/block", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
 
   try {
@@ -467,12 +585,24 @@ router.put("/admin/fans/block", async function (req, res) {
         id_user: id
       }
     });
-    return res.status(200).json("Fans has been block");
+   return res.status(200).json({ message: "Fans has been block" });
   } catch (error) {
     return res.status(400).send("Failed to block fans");
   }
 });
 router.put("/admin/fans/unblock", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
 
   try {
@@ -487,13 +617,25 @@ router.put("/admin/fans/unblock", async function (req, res) {
         id_user: id
       }
     });
-    return res.status(200).json("Fans was unblock");
+   return res.status(200).json({ message: "Fans has been unblock" });
   } catch (error) {
     return res.status(400).send("Failed to unblock fans");
   }
 });
 
 router.delete("/admin/fans/delete", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     if (!id) {
@@ -589,7 +731,19 @@ router.delete("/admin/fans/delete", async function (req, res) {
 });
 
 router.delete("/admin/artist/delete", async function (req, res) {
-   const { id } = req.query;
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
+  const { id } = req.query;
   try {
    
     if (!id) {
@@ -750,6 +904,19 @@ router.delete("/admin/artist/delete", async function (req, res) {
 });
 
 router.get("/admin/account/fans/total", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
+
   try {
     const total = await Fans.count();
     res.status(200).json(total);
@@ -758,6 +925,18 @@ router.get("/admin/account/fans/total", async function (req, res) {
   }
 });
 router.get("/admin/account/artist/total", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const total = await Artist.count();
     res.status(200).json(total);

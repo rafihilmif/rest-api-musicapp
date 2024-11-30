@@ -93,7 +93,7 @@ router.post(
         newIdNumberShow = parseInt(numericPartShow, 10) + 1;
       }
       let newIdShows = newIdPrefixShow + newIdNumberShow.toString().padStart(3, '0');
-      await Shows.create({
+      const data = await Shows.create({
         id_show: newIdShows,
         id_artist: userdata.id_artist,
         name: name,
@@ -105,7 +105,10 @@ router.post(
         created_at: Date.now(),
         status: status,
       });
-      return res.status(201).json({ message: "Successfully added show" });
+      return res.status(201).json({
+        message: "Successfully added show",
+        data: data
+       });
     } catch (error) {
       if (error.isJoi) {
         return res.status(400).json({
@@ -227,8 +230,8 @@ router.get("/artist/shows", async function (req, res) {
 router.put("/artist/show/update", upload.single('image'), async function (req, res) {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
   }
   
   const { id } = req.query;
@@ -260,7 +263,10 @@ router.put("/artist/show/update", upload.single('image'), async function (req, r
 
     await show.save();
 
-    return res.status(200).json({message: "Data show successfully updated"});
+    return res.status(200).json({
+      message: "Data show successfully updated",
+      data: newData
+    });
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');

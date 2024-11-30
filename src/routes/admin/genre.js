@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -6,6 +6,8 @@ const Genre = require("../../models/Genre");
 
 const router = express.Router();
 const Joi = require("joi");
+const Artist = require("../../models/Artist");
+const Song = require("../../models/Song");
 
 const checkGenre = async (name) => {
   const dataCheck = await Genre.findOne({
@@ -20,7 +22,20 @@ const checkGenre = async (name) => {
   }
   return name; 
 };
+
 router.post("/admin/genre/add", async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   let { name } = req.body;
 
   const schema = Joi.object({
@@ -67,7 +82,20 @@ router.post("/admin/genre/add", async function (req, res) {
     }
   }
 });
+
 router.get("/admin/choose/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const data = await Genre.findAll();
 
@@ -76,7 +104,20 @@ router.get("/admin/choose/genre", async function (req, res) {
     return res.status(400).json("Failed to get genre" + error);
   }
 });
+
 router.get("/admin/genres", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 8;
   const offset = (page - 1) * limit || 0;
@@ -92,10 +133,23 @@ router.get("/admin/genres", async function (req, res) {
       total: count,
     });
   } catch (err) {
-    return res.status(400).send("gagal memuat data");
+  return res.status(400).json("Failed to get all genre");
   }
 });
+
 router.get("/admin/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Genre.findOne({
@@ -107,12 +161,28 @@ router.get("/admin/genre", async function (req, res) {
     });
     return res.status(200).send(data);
   } catch (error) {
-    return res.status(404).send("data tidak ditemukan");
+    return res.status(400).json("Failed to get a genre");
   }
 });
+
 router.put("/admin/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
-  try {
+  const { name } = req.body;
+  const data = await Genre.findByPk(id);
+   await Artist.update({ genre: name}, { where: { genre: data.name } });
+    await Song.update({ genre: name}, { where: { genre: data.name } });
     await Genre.update(req.body, {
       where: {
         id_genre: {
@@ -120,10 +190,40 @@ router.put("/admin/genre", async function (req, res) {
         },
       },
     });
-    return res.status(201).send("Data berhasil diubah");
+    return res.status(200).json({message: "Successfully update genre"});
+  try {
+   
   } catch (error) {
-    return res.status(400).send("gagal memuat data");
+    return res.status(400).json("Failed to update genre");
   }
 });
 
+router.delete("/admin/genre/delete", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+
+  const { id } = req.query;
+  const data = await Genre.findByPk(id);
+  
+   
+  try {
+     if (!data) return res.status(404).json({ message: "Genre not found" });
+
+    await Artist.update({ genre: "-" }, { where: { genre: data.name } });
+    await Song.update({ genre: "-" }, { where: { genre: data.name } });
+    await Genre.destroy({ where: { id_genre: id } });
+      return res.status(200).json({message: "Successfully delete genre"});
+  } catch (error) {
+    return res.status(400).json("Failed to delete genre");
+  }
+});
 module.exports = router;

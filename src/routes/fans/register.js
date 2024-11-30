@@ -161,7 +161,7 @@ router.post("/register/fans", async function (req, res) {
       });
 
       return res.status(201).json({
-        message: "Successfully register as Fans",
+        message: "Successfully register as Fans, we're already sent verify email, please check it!",
         data : data
      });
   } catch (error) {

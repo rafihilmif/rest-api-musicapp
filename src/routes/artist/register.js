@@ -9,6 +9,7 @@ const router = express.Router();
 
 const Joi = require("joi");
 const bcrypt = require("bcrypt");
+const Genre = require('../../models/Genre');
 
 const checkEmail = async (email) => {
   const dataCheck = await Artist.findOne({
@@ -104,7 +105,7 @@ router.post("/register/artist", async function (req, res) {
     }
   let newIdArtist = newIdPrefixArtist + newIdNumberArtist.toString().padStart(3, '0');
   const passwordHash = bcrypt.hashSync(password, 10);
-      await Artist.create({
+      const data = await Artist.create({
         id_artist: newIdArtist,
         email: email,
         name: name,
@@ -147,8 +148,8 @@ router.post("/register/artist", async function (req, res) {
         `
       });
       return res.status(201).json({
-        message: "Successfully register as Artist",
-        // data: data
+        message: "Successfully register as Artist, we're already sent verify email, please check it!",
+        data: data
       },
       );
   } catch (error) {
@@ -167,6 +168,15 @@ router.post("/register/artist", async function (req, res) {
     }
   }
   
+});
+router.get("/register/browse/genre", async function (req, res) {
+
+  try {
+    const data = await Genre.findAll();
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).send('Failed to get genre data');
+  }
 });
 
 router.get("/verify-artist-email/:token", async function (req, res) {

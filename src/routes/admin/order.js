@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -18,15 +18,27 @@ const Artist = require("../../models/Artist");
 const router = express.Router();
 
 router.get("/admin/order", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+    if (userdata.role !== "admin") {
+      return res.status(401).json({ message: 'your are not admin' });
+    }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
   try {
-const { rows, count } = await Ordered.findAndCountAll({
-          include: {
-              model: Fans,
-              attributes: ["email", "avatar", "username"]
-        },
+    const { rows, count } = await Ordered.findAndCountAll({
+      include: {
+        model: Fans,
+        attributes: ["email", "avatar", "username"]
+      },
       limit,
       offset,
       order: [[Sequelize.literal(`id_order`), "ASC"]],
@@ -39,7 +51,20 @@ const { rows, count } = await Ordered.findAndCountAll({
     return res.status(400).send("Failed to get data order" + error);
   }
 });
+
 router.get("/admin/detail/order", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+  
   const { id } = req.query;
 
   try {
@@ -55,7 +80,20 @@ router.get("/admin/detail/order", async function (req, res) {
     res.status(400).json({ error: 'Failed to get order' });
   }
 });
+
 router.get("/admin/item/order", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
     try {       
      const data = await OrderItem.findAll({
@@ -84,7 +122,20 @@ router.get("/admin/item/order", async function (req, res) {
         return res.status(400).json({ error: 'Failed to get item in ordeer' });
     }
 });
+
 router.get("/admin/ordered/chart", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+
     try {
       const data = await Ordered.findAll({
         where: {
@@ -95,7 +146,20 @@ router.get("/admin/ordered/chart", async function (req, res) {
       return res.status(400).json("Failed to get")
     }
 });
+
 router.get("/admin/most/merchandise", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+  
   try {
     const data= await OrderItem.findAll({
       include: [

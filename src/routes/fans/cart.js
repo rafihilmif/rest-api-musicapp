@@ -179,6 +179,13 @@ router.put('/fans/cart', async function (req, res) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "fans") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
+    
     const { id } = req.query;
     const { qty } = req.body;
 
@@ -235,7 +242,7 @@ router.put('/fans/cart', async function (req, res) {
         cartItem.qty = qty;
         await cartItem.save();
 
-        res.status(200).json({ message: 'Cart updated successfully', cartItem });
+        res.status(200).json({ message: 'Cart updated successfully', data: cartItem });
     } catch (error) {
         console.error('Error updating cart:', error);
         res.status(500).json({ message: 'An error occurred while updating the cart' });

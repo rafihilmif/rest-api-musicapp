@@ -55,7 +55,12 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
   }
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
   
+  if (userdata.role !== "artist") {
+     return res.status(401).json({ message: 'your are not artist' });
+  }
+
   let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock, status } = req.body;
 
    const imageUrl = req.files.map((file, index) => ({
@@ -76,8 +81,6 @@ router.post('/artist/merchandise/add', upload.array('image', 5), async function 
     stock: Joi.number()
   });
 
-  
-  
   try {
     await schema.validateAsync(req.body);
     const userdata = jwt.verify(token, process.env.JWT_KEY);
@@ -350,6 +353,13 @@ router.get("/artist/collection/merchandise/sort/sweatshirt", async function (req
     return res.status(401).json({ message: 'No token provided' });
   }
 
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
+
   const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -388,6 +398,13 @@ router.get("/artist/collection/merchandise/sort/accessories", async function (re
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
   }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
 
   const {id,page, pageSize} = req.query;
   const limit = pageSize || 18;
@@ -478,6 +495,13 @@ router.put('/artist/merch/update', upload.array('image', 5), async function (req
     return res.status(401).json({ message: 'No token provided' });
   }
 
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
+
   const { id } = req.query;
   const newData = req.body;
 
@@ -561,11 +585,18 @@ router.get("/artist/merchandise", async function (req, res) {
     return res.status(401).json({ message: 'No token provided' });
   }
 
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+
+
   const { limit } = req.query || 5;
   try {
     const data = await Merch.findAll({
       where: {
-        id_artist: id,
+        id_artist: userdata.id_artist,
       },
       limit: limit
     });

@@ -93,6 +93,12 @@ router.post(
       return res.status(401).json({ message: 'No token provided' });
     }
 
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+    }
+
     let { album, name, genre, release_date, credit, lyric, status } = req.body;
 
     const audioFile = req.files.audio[0];
@@ -201,6 +207,18 @@ router.post(
 );
 
 router.get("/artist/collection/song", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+  
   const { id } = req.query;
   const { page, pageSize } = req.query;
   const limit = pageSize || 18;
@@ -235,6 +253,17 @@ router.get("/artist/collection/song", async function (req, res) {
   }
 });
 router.get("/artist/collection/song/sort/new", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+  
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -268,6 +297,19 @@ router.get("/artist/collection/song/sort/new", async function (req, res) {
   }
 });
 router.get("/artist/collection/song/sort/old", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+  
+
   const { id, page, pageSize  } = req.query;
   const limit = pageSize || 18;
   const offset = (page - 1) * limit || 0;
@@ -301,6 +343,18 @@ router.get("/artist/collection/song/sort/old", async function (req, res) {
   }
 });
 router.get("/artist/song", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+  }
+  
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+    }
+
   const { id } = req.query;
   const { limit } = req.query || 5;
 
@@ -317,6 +371,17 @@ router.get("/artist/song", async function (req, res) {
   }
 });
 router.get('/artist/detail/song', async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+  
   const { id } = req.query;
 
   try {
@@ -342,7 +407,18 @@ router.put("/artist/song/update", upload.fields([
       name: "audio",
       maxCount: 1,
     },
-  ]), async function (req, res) {
+]), async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+    }
+
     const { id } = req.query;
     const newData = req.body;
     try {
@@ -388,6 +464,18 @@ router.put("/artist/song/update", upload.fields([
 });
 
 router.delete("/artist/song/delete", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+     if (userdata.role !== "artist") {
+      return res.status(401).json({ message: 'your are not artist' });
+  }
+  
   const { id } = req.query;
 
    const data = await Song.findOne(

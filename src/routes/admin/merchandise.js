@@ -1,6 +1,6 @@
-const { response } = require("express");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
+const jwt = require("jsonwebtoken");
 
 const Artist = require("../../models/Artist");
 const Category = require("../../models/Category");
@@ -66,6 +66,18 @@ const upload = multer({
 });
 
 router.post("/admin/categories/add", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   let { name } = req.body;
 
   const schema = Joi.object({
@@ -114,6 +126,18 @@ router.post("/admin/categories/add", async function (req, res) {
 });
 
 router.get("/admin/categories", async function (req, res) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
@@ -132,7 +156,20 @@ router.get("/admin/categories", async function (req, res) {
     return res.status(400).send("gagal memuat data");
   }
 });
+
 router.get("/admin/category", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Category.findOne({
@@ -147,9 +184,25 @@ router.get("/admin/category", async function (req, res) {
     return res.status(404).send("Data tidak ditemukan");
   }
 });
+
 router.put("/admin/category", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
+  const { name } = req.body;
+  const data = await Category.findByPk(id);
   try {
+    await Merch.update({ category: name }, { where: { category: data.name } });
     await Category.update(req.body, {
       where: {
         id_category: {
@@ -157,13 +210,25 @@ router.put("/admin/category", async function (req, res) {
         },
       },
     });
-    return res.status(200).send("Data berhasil diubah");
+    return res.status(200).send({message: "Data berhasil diubah"});
   } catch (error) {
     return res.status(400).send("Gagal merubah data");
   }
 });
 
 router.post('/admin/merchandise/add', upload.array('image', 5), async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   let { name, category, sizeS, sizeM, sizeL, sizeXL, price, description, stock} = req.body;
 
@@ -247,6 +312,18 @@ router.post('/admin/merchandise/add', upload.array('image', 5), async function (
   
 });
 router.get("/admin/choose/categories", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const data = await Category.findAll();
 
@@ -256,6 +333,18 @@ router.get("/admin/choose/categories", async function (req, res) {
   }
 });
 router.get("/admin/choose/artist", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const data = await Artist.findAll();
 
@@ -265,6 +354,18 @@ router.get("/admin/choose/artist", async function (req, res) {
   }
 });
 router.get("/admin/merchs", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
@@ -289,6 +390,18 @@ router.get("/admin/merchs", async function (req, res) {
   }
 });
 router.get('/admin/image/merchandise', async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   const { number } = req.query;
 
@@ -327,6 +440,18 @@ router.get('/admin/image/merchandise', async function (req, res) {
  
 });
 router.get("/admin/detail/merchandise", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
 
   try {
@@ -344,6 +469,18 @@ router.get("/admin/detail/merchandise", async function (req, res) {
 });
 
 router.put("/admin/merchandise/update", upload.array('image', 5), async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   const newData = req.body;
   try {
@@ -413,7 +550,7 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
       }
     }
 
-    return res.status(200).send('Data successfully updated');
+    return res.status(200).send({message: 'Data successfully updated'});
   } catch (error) {
     console.error('Failed to update data:', error);
     return res.status(400).send('Failed to update data');
@@ -421,6 +558,18 @@ router.put("/admin/merchandise/update", upload.array('image', 5), async function
 });
 
 router.delete("/admin/merchandise/delete", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
 
   const dataImage = await ImageMerch.findAll({
@@ -456,12 +605,25 @@ router.delete("/admin/merchandise/delete", async function (req, res) {
         id_merchandise: id
       }
     });
-    return res.status(200).json("Successfully deleted merchandise");
+    return res.status(200).json({message: "Successfully deleted merchandise"});
   } catch (error) {
     return res.status(400).json("Failed to delete merchandise");
   }
 });
+
 router.put("/admin/merchandise/hidden", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     await Merch.update(
@@ -471,12 +633,25 @@ router.put("/admin/merchandise/hidden", async function (req, res) {
           id_merchandise: id
         }
       });
-    return res.status(200).json("Successfully hidden merchandise");
+    return res.status(200).json({message: "Successfully hidden merchandise"});
   } catch (error) {
     return res.status(400).json("Failed to hidden merchandise");
   }
 });
+
 router.put("/admin/merchandise/unhidden", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     await Merch.update(
@@ -486,12 +661,25 @@ router.put("/admin/merchandise/unhidden", async function (req, res) {
           id_merchandise: id
         }
       });
-    return res.status(200).json("Successfully unhidden merchandise");
+    return res.status(200).json({message: "Successfully unhidden merchandise"});
   } catch (error) {
     return res.status(400).json("Failed to unhidden merchandise");
   }
 });
+
 router.get("/admin/total/merchandise", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+  
   try {
     const total = await Merch.count();
     return res.status(200).json(total);
@@ -499,5 +687,31 @@ router.get("/admin/total/merchandise", async function (req, res) {
     return res.status(400).json("Failed to get total data merchandise");
   }
 });
+router.delete("/admin/categories/delete", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
 
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+    return res.status(401).json({ message: 'your are not admin' });
+  }
+
+  const { id } = req.query;
+  const data = await Category.findByPk(id);
+  
+   
+  try {
+     if (!data) return res.status(404).json({ message: "Categories not found" });
+
+    await Merch.update({ category: "-" }, { where: { category: data.name } });
+    await Category.destroy({ where: { id_category: id } });
+      return res.status(200).json({message: "Successfully delete categories"});
+  } catch (error) {
+    return res.status(400).json("Failed to delete categories");
+  }
+});
 module.exports = router;

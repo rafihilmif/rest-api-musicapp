@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -16,9 +16,21 @@ const ImageMerch = require("../../models/ImageMerch");
 const router = express.Router();
 
 router.get("/admin/transaction", async function (req, res) {
- const { page, pageSize } = req.query;
-  const limit = pageSize || 9;
-  const offset = (page - 1) * limit || 0;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+    if (userdata.role !== "admin") {
+        return res.status(401).json({ message: 'your are not admin' });
+    }
+    
+    const { page, pageSize } = req.query;
+    const limit = pageSize || 9;
+    const offset = (page - 1) * limit || 0;
 
   try {
       const { rows, count } = await Transaction.findAndCountAll({
@@ -38,7 +50,20 @@ router.get("/admin/transaction", async function (req, res) {
     return res.status(400).send("Failed to get data transaction" + error);
   }
 });
+
 router.get("/admin/detail/transaction", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+    if (userdata.role !== "admin") {
+        return res.status(401).json({ message: 'your are not admin' });
+    }
+
     const { id } = req.query;
 
     try {
@@ -55,6 +80,18 @@ router.get("/admin/detail/transaction", async function (req, res) {
     }
 });
 router.get("/admin/item/transaction", async function (req, res) {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+    if (userdata.role !== "admin") {
+        return res.status(401).json({ message: 'your are not admin' });
+    }
+
     const { id } = req.query;
      
     try {       

@@ -1,4 +1,4 @@
-const { response } = require("express");
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const { Op, Sequelize } = require("sequelize");
 
@@ -76,6 +76,18 @@ const upload = multer({
 
 
 router.get("/admin/choose/album", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   let { id} = req.query;
 
   const data = await Album.findAll({
@@ -84,6 +96,28 @@ router.get("/admin/choose/album", async function (req, res) {
     },
   });
   return res.status(200).json(data);
+});
+
+router.get("/admin/choose/genre", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
+  try {
+    const data = await Genre.findAll();
+
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(400).json("Failed to get genre" + error);
+  }
 });
 
 router.post(
@@ -99,6 +133,19 @@ router.post(
     },
   ]),
   async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
+    
     let { id_artist, album, name, genre, release_date, credit, lyric } =
       req.body;
     const audioFile = req.files.audio[0];
@@ -196,7 +243,20 @@ router.post(
     }
   },
 );
+
 router.get("/admin/songs", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { page, pageSize } = req.query;
   const limit = pageSize || 9;
   const offset = (page - 1) * limit || 0;
@@ -227,6 +287,18 @@ router.get("/admin/songs", async function (req, res) {
 });
 
 router.get("/admin/song", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
   try {
     const data = await Song.findOne({
@@ -261,6 +333,18 @@ router.put(
     },
   ]),
   async function (req, res) {
+     const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
     const { id } = req.query;
     const newData = req.body;
     try {
@@ -296,6 +380,7 @@ router.put(
         saveNewUpdateData.audio = req.files["audio"][0].filename;
       }
       await song.update(saveNewUpdateData);
+      return res.status(200).json({ message: "Successfully to update song" });
     } catch (error) {
       return res.status(400).send("Gagal merubah data");
     }
@@ -303,6 +388,18 @@ router.put(
 );
 
 router.delete("/admin/song/delete", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   const { id } = req.query;
 
    const data = await Song.findOne(
@@ -347,6 +444,18 @@ router.delete("/admin/song/delete", async function (req, res) {
 });
 
 router.get("/admin/total/song", async function (req, res) {
+   const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const userdata = jwt.verify(token, process.env.JWT_KEY);
+  
+  if (userdata.role !== "admin") {
+     return res.status(401).json({ message: 'your are not admin' });
+  }
+
   try {
     const data = await Song.count();
     return res.status(200).json(data);
